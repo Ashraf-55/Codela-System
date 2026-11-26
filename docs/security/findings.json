@@ -1,0 +1,276 @@
+[
+ {
+  "verdict": "rejected",
+  "fingerprint": "codela-2fa-routes-unauthenticated",
+  "title": "Tenant 2FA routes not covered by authenticate",
+  "description": "authenticate is mounted on /auth/me, /auth/logout, /tenant and /search but not /auth/2fa.",
+  "claimed_root_cause": "Unauthenticated access to 2FA setup and disable.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "apps/api/src/app.ts",
+    "line": 286,
+    "scope": "/auth/2fa mount",
+    "description": "twoFactorRouter on authed router"
+   },
+   {
+    "kind": "sink",
+    "file": "apps/api/src/login-gate.ts",
+    "line": 43,
+    "scope": "me()",
+    "description": "dereferences req.auth"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "apps/api/src/app.ts",
+    "line": 400,
+    "description": "authenticate mount list"
+   }
+  ],
+  "reason": "Not a vulnerability: without req.auth the handler throws and returns 500 before any read or write. Confirmed as a real functional defect by the owner's npm test run (login-security.test.ts: 500 on POST /auth/2fa/setup), so tenant staff could not enable 2FA. Fixed by adding /auth/2fa to the authenticate mount list in app.ts."
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "codela-addon-free-activation",
+  "title": "Tenant owner can activate paid add-ons without payment",
+  "description": "POST /tenant/addons/:key/activate grants entitlements (sms, whatsapp, custom domain, storage) with no gateway call, also outside sandbox mode. Entitlements gate operator-funded SMS and WhatsApp delivery. The docs state add-on charging is not wired yet.",
+  "claimed_root_cause": "Add-on activation is a plain database write with no payment verification.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "apps/api/src/app.ts",
+    "line": 353,
+    "scope": "POST /tenant/addons/:key/activate",
+    "description": "requires subscription.manage (owner)"
+   },
+   {
+    "kind": "propagation",
+    "file": "apps/api/src/entitlements.ts",
+    "line": 32,
+    "scope": "effectiveLimits",
+    "description": "active add-on grants merged into limits"
+   },
+   {
+    "kind": "sink",
+    "file": "apps/api/src/outbox.ts",
+    "line": 22,
+    "scope": "enqueue",
+    "description": "sms and whatsapp queued when limits grant them"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "docs/SUBSCRIPTION_SYSTEM.md",
+    "line": 7,
+    "description": "documents that add-on charging is not wired to the gateway"
+   },
+   {
+    "file": "packages/db/src/seed.ts",
+    "line": 35,
+    "description": "sms add-on grants sms:true"
+   }
+  ],
+  "blockers": [
+   "Offline integration run is blocked because target dependencies are not installed",
+   "Whether the operator accepts the documented limitation or sells add-ons out of band"
+  ],
+  "validation_plan": {
+   "local": "Run the existing add-on tests offline with dependencies present and confirm activation succeeds with NODE_ENV=production and no payment provider.",
+   "deployment": "Owner confirms how add-ons are billed in production and whether SMS/WhatsApp providers are configured."
+  }
+ },
+ {
+  "verdict": "confirmed",
+  "fingerprint": "codela-perm-module-namespace-collision",
+  "title": "Business-product manager gains owner-only employees.manage through module-name collision",
+  "description": "At registration the manager role receives \"<module>.*\" for every entity module of the product. The Business product has an entity whose module is \"employees\", the same namespace as the core permission employees.manage. hasPermission treats employees.* as granting employees.manage, so a manager can create and suspend staff accounts.",
+  "root_cause": "Product module names share a flat namespace with core permission keys, and wildcard expansion in hasPermission matches by the first dot segment.",
+  "intended_behavior": "Manager holds only employees.read (SYSTEM_ROLES); creating and suspending login accounts is owner-only.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "apps/api/src/app.ts",
+    "line": 233,
+    "scope": "POST /tenant/employees",
+    "description": "guarded only by requirePermission(employees.manage)"
+   },
+   {
+    "kind": "propagation",
+    "file": "apps/api/src/app.ts",
+    "line": 94,
+    "scope": "register-business",
+    "description": "manager gets <module>.* for each product entity"
+   },
+   {
+    "kind": "propagation",
+    "file": "packages/shared/src/permissions.ts",
+    "line": 20,
+    "scope": "hasPermission",
+    "description": "employees.* satisfies employees.manage"
+   },
+   {
+    "kind": "sink",
+    "file": "apps/api/src/app.ts",
+    "line": 242,
+    "scope": "employee create",
+    "description": "inserts a user and membership with chosen role and password"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "apps/api/src/products/defs/business.ts",
+    "line": 128,
+    "description": "entity employee declares module \"employees\""
+   },
+   {
+    "file": "packages/shared/src/permissions.ts",
+    "line": 10,
+    "description": "baseline manager role lacks employees.manage"
+   },
+   {
+    "file": "apps/api/src/app.ts",
+    "line": 223,
+    "description": "PATCH /tenant/employees/:id also needs employees.manage"
+   }
+  ],
+  "conditions": [
+   {
+    "kind": "authentication_level",
+    "description": "Attacker holds an authenticated manager session"
+   },
+   {
+    "kind": "system_configuration",
+    "description": "Tenant registered with the business product"
+   }
+  ],
+  "execution": {
+   "attacker_perspective": "Manager of a Business-product tenant using dummy data",
+   "payloads": [
+    "hasPermission(managerPermissions, \"employees.manage\")"
+   ],
+   "instructions": [
+    "Copy business.ts and packages/shared into an offline sandbox scratch directory",
+    "Build manager permissions with the app.ts:93-99 expression",
+    "Evaluate the guard used by requirePermission for employees.read and employees.manage"
+   ],
+   "observed_result": "managerHasWildcard=true; employees.manage is the only permission escalated beyond baseline; guard result true for manager. Employee role and other owner-only permissions (roles.manage, tenant.settings, subscription.manage) stayed false. HTTP route not executed because dependencies are unavailable offline."
+  },
+  "remediation": {
+   "strategy": "Do not derive permission keys from product module names without a namespace. Prefix product permissions (for example \"mod:employees.*\") or rename the module, and make hasPermission wildcard apply only to the same namespace. Add a regression test for every product that manager lacks employees.manage. Ready-made fix in fix/: business-module-rename.patch (module employees -> hr), migrate-business-manager-permission.sql for existing tenants, and manager-employees.test.ts (copy to apps/api/test/) which fails before the fix and passes after."
+  },
+  "severity": {
+   "likelihood": {
+    "score": "medium",
+    "reason": "Needs a manager account in a Business tenant."
+   },
+   "impact": {
+    "score": "medium",
+    "reason": "Manager can create manager accounts and suspend other non-owner staff; owner cannot be touched."
+   },
+   "overall_severity": "medium"
+  },
+  "confidence": {
+   "score": "medium",
+   "reason": "Function-level harness observed; route chain verified by source only; no independent verifier agent was available."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "codela-plan-upgrade-no-payment",
+  "title": "Plan change applies a higher tier immediately without payment or proration",
+  "description": "change-plan only checks that access is full and that downgrade usage fits. A tenant may switch to a higher tier for the paid period and switch back before renewal.",
+  "claimed_root_cause": "Plan change is not tied to a paid invoice for the target tier.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "apps/api/src/app.ts",
+    "line": 320,
+    "scope": "POST /tenant/subscription/change-plan",
+    "description": "owner only"
+   },
+   {
+    "kind": "sink",
+    "file": "apps/api/src/app.ts",
+    "line": 331,
+    "scope": "subscriptions update",
+    "description": "planId replaced immediately"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "apps/api/src/app.ts",
+    "line": 325,
+    "description": "access full includes trialing, active and past_due"
+   },
+   {
+    "file": "docs/SUBSCRIPTION_SYSTEM.md",
+    "line": 7,
+    "description": "billing model for plan changes is not described as prorated"
+   }
+  ],
+  "blockers": [
+   "Intended billing semantics for mid-period upgrades are not in source",
+   "Offline integration run blocked by missing dependencies"
+  ],
+  "validation_plan": {
+   "local": "Run platform.test.ts change-plan cases offline and observe limits after upgrade without a new invoice.",
+   "deployment": "Product owner confirms whether upgrades are meant to bill immediately."
+  }
+ },
+ {
+  "verdict": "needs_validation",
+  "fingerprint": "codela-recovery-link-forwarded-host",
+  "title": "Password-reset and verification links may use a client-supplied forwarded host",
+  "description": "The API builds the emailed reset link from the raw X-Forwarded-Host header when PUBLIC_WEB_URL is unset. An attacker who can reach the API directly could point a victim reset link to an attacker host.",
+  "claimed_root_cause": "base() trusts req.get(\"x-forwarded-host\") regardless of the trust-proxy setting.",
+  "trace": [
+   {
+    "kind": "entrypoint",
+    "file": "apps/api/src/account-recovery.ts",
+    "line": 36,
+    "scope": "POST /auth/forgot-password",
+    "description": "unauthenticated, takes victim email"
+   },
+   {
+    "kind": "propagation",
+    "file": "apps/api/src/account-recovery.ts",
+    "line": 29,
+    "scope": "base",
+    "description": "host taken from raw header"
+   },
+   {
+    "kind": "sink",
+    "file": "apps/api/src/account-recovery.ts",
+    "line": 43,
+    "scope": "enqueueSystem",
+    "description": "link with signed token is emailed"
+   }
+  ],
+  "evidence": [
+   {
+    "file": "apps/web/src/app/api/v1/[...path]/route.ts",
+    "line": 18,
+    "description": "Next proxy overwrites x-forwarded-host with Host or a validated tenant slug"
+   },
+   {
+    "file": "apps/api/src/server.ts",
+    "line": 14,
+    "description": "API listens on all interfaces"
+   },
+   {
+    "file": "deploy/Caddyfile",
+    "line": 3,
+    "description": "Caddy routes only the configured domain"
+   }
+  ],
+  "blockers": [
+   "Whether port 4000 is reachable from untrusted clients (systemd or pm2 deployments)",
+   "Whether PUBLIC_WEB_URL is set in production"
+  ],
+  "validation_plan": {
+   "local": "Run the account-recovery tests offline with a dummy request carrying X-Forwarded-Host and PUBLIC_WEB_URL unset, and read the queued outbox link.",
+   "deployment": "Owner checks listening sockets and firewall for the API port, and confirms PUBLIC_WEB_URL is set."
+  }
+ }
+]

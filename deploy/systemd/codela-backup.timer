@@ -1,0 +1,10 @@
+# systemctl enable --now codela-backup.timer   (copy the backups off the machine too: see docs/PRODUCTION.md)
+[Unit]
+Description=Nightly Codela database backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

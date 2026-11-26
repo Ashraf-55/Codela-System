@@ -1,0 +1,1 @@
+ALTER TABLE `tenants` ADD `notify_prefs` text DEFAULT '{}' NOT NULL;

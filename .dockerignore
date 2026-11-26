@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.next
+**/.next
+data
+.env
+.env.local
+*.db
+*.db-wal
+*.db-shm
+.git
+e2e/node_modules
+test-results
+playwright-report

@@ -1,0 +1,9 @@
+[Unit]
+Description=Codela database backup
+
+[Service]
+Type=oneshot
+User=codela
+WorkingDirectory=/opt/codela
+EnvironmentFile=/opt/codela/.env
+ExecStart=/usr/bin/npm run backup

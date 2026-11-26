@@ -1,0 +1,1 @@
+ALTER TABLE `tenants` ADD `tax_bp` integer DEFAULT 0 NOT NULL;

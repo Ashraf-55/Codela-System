@@ -1,0 +1,19 @@
+<<<<<<< HEAD
+node_modules
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.local
+.next/
+data/
+*.tsbuildinfo
+=======
+_internal/
+dist/
+build/
+venv/
+__pycache__/
+*.spec
+*.exe
+>>>>>>> 1ee757d6590a0d33a912811c7cb4041a293bdfb6

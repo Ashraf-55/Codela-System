@@ -1,0 +1,23 @@
+# Copy to /etc/systemd/system/, adjust User and WorkingDirectory, then: systemctl daemon-reload && systemctl enable --now codela-api
+[Unit]
+Description=Codela API
+After=network.target
+
+[Service]
+Type=simple
+User=codela
+WorkingDirectory=/opt/codela
+Environment=NODE_ENV=production PORT=4000 TRUST_PROXY=1
+EnvironmentFile=/opt/codela/.env
+ExecStart=/usr/bin/npm run start:api
+Restart=on-failure
+RestartSec=3
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/codela/data
+
+[Install]
+WantedBy=multi-user.target

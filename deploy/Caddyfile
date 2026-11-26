@@ -1,0 +1,12 @@
+# Caddy obtains and renews HTTPS certificates automatically for DOMAIN. Tenant sites (<slug>.ROOT_DOMAIN) need a WILDCARD certificate:
+# that requires the DNS challenge (a Caddy build with your DNS provider's plugin). Until then, serve the product on DOMAIN only.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:3000
+}
+# Wildcard for tenant sites: uncomment after adding a DNS-provider plugin (https://caddyserver.com/docs/automatic-https#dns-challenge)
+# *.{$ROOT_DOMAIN} {
+# 	tls { dns <provider> {env.DNS_API_TOKEN} }
+# 	encode zstd gzip
+# 	reverse_proxy web:3000
+# }

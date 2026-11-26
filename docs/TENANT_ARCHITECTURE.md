@@ -1,0 +1,8 @@
+# TENANT_ARCHITECTURE
+
+* **Identity**: `users` are global; `memberships` bind a user to a tenant with a `role` (system roles `owner` / `manager` / `employee`, permissions in `role_permissions`, seeded per product at registration). Codela staff are separate (`platform_staff`, cookie `psid`, shorter sessions, roles `super_admin` / `support` / `finance` / `sales`).
+* **Resolving the tenant**: authenticated routes read it from the session row (`sessions.tenant_id`) joined to an *active* membership. Public routes resolve it from the Host: `<slug>.<ROOT_DOMAIN>` or a **verified** custom domain. A tenant id sent in a header/body/query is ignored (covered by tests).
+* **Isolation**: every data access is tenant-predicated (`scoped()` repos, `records.tenant_id` in all queries, `search_index.tenant_id`). References between records are validated against the same tenant (a foreign id yields `REFERENCE_NOT_FOUND`). `apps/api/test/security.test.ts` creates a record of every creatable entity in tenant A for each product and proves tenant B cannot read, list, edit or delete it.
+* **Lifecycle**: registration creates tenant + roles + owner + trial subscription atomically. Platform suspension blocks login and every authenticated request (`ACCOUNT_SUSPENDED`).
+* **Branding & domains**: `tenant_sites` stores draft/published JSON (https-only URLs, hex colours); `domains` are verified by a DNS TXT record (`_codela-verify.<host>` = token) and only verified domains route. SSL issuance is **not** implemented (status `pending_provisioning`) — see DEPLOYMENT.md.
+* **Plan limits**: employees and records are counted per tenant and enforced on the backend (`PLAN_LIMIT_EXCEEDED`).
