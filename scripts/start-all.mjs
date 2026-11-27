@@ -5,7 +5,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { createServer as netServer } from 'node:net';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -36,7 +35,6 @@ let handler = (_req, res) => { res.writeHead(503, { 'content-type': 'text/html; 
 const server = createServer((req, res) => handler(req, res));
 server.listen(Number(val(process.env.PORT, '3000')), () => log(`listening on ${val(process.env.PORT, '3000')}`)); // first thing: the host waits for this
 
-const freePort = () => new Promise((r, j) => { const s = netServer(); s.unref(); s.on('error', j); s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => r(port)); }); });
 let api = null, stopping = false;
 function stop(code) { if (stopping) return; stopping = true; api?.kill('SIGTERM'); server.close(); setTimeout(() => process.exit(code), 2000).unref(); }
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => stop(0));
@@ -58,11 +56,14 @@ async function buildIfMissing() {
 
 async function main() {
   await buildIfMissing();
-  const apiPort = Number(val(process.env.API_PORT, '')) || await freePort(); // a fresh port per start: a lingering old instance can never block it
-  process.env.API_URL = val(process.env.API_URL, `http://127.0.0.1:${apiPort}`);
-  // 'ipc' lets the API notice when this process dies (it exits on disconnect), so no orphan keeps running
-  api = spawn(process.execPath, ['--import', tsxLoader, 'src/server.ts'], { cwd: apiDir, stdio: ['inherit', 'inherit', 'inherit', 'ipc'], env: { ...process.env, PORT: String(apiPort) } });
+  // The API picks its own free port (PORT=0) and reports it over IPC: this process must not open any other socket,
+  // because Hostinger's runner captures listen() calls made in the entry process.
+  api = spawn(process.execPath, ['--import', tsxLoader, 'src/server.ts'], { cwd: apiDir, stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+    env: { ...process.env, PORT: val(process.env.API_PORT, '0'), API_HOST: '127.0.0.1' } }); // 'ipc' also lets the API exit when this process dies
   api.on('exit', (code) => { log(`api exited (${code}); stopping`); stop(code ?? 1); });
+  const apiPort = await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('the API did not start within 90 s')), 90_000);
+    api.on('message', (m) => { if (m?.type === 'api-ready') { clearTimeout(t); res(m.port); } }); });
+  process.env.API_URL = val(process.env.API_URL, `http://127.0.0.1:${apiPort}`); // set before Next.js loads the modules that read it
   process.chdir(webDir);
   const app = webRequire('next')({ dev: false, dir: webDir });
   await app.prepare();

@@ -21,4 +21,8 @@ startOutboxWorker(db, providers);
 startAddOnScheduler(db);     // monthly add-on renewals / expiry (hourly, idempotent)
 // E2E / load-test only: raise the per-IP auth + public-form limiters (ignored in production, so the real protection can never be loosened there)
 const relax = process.env.NODE_ENV !== 'production' && process.env.E2E_RELAX_RATE_LIMITS === '1' ? { authRateLimitMax: 10_000, publicFormRateLimitMax: 10_000, globalRateLimitMax: 100_000 } : {};
-createApp({ db, providers, ...relax }).listen(port, () => console.log(`[api] listening on :${port} (db: ${file})`));
+// API_HOST (set by scripts/start-all.mjs): bind privately to loopback. PORT=0 there: the OS picks a free port, reported to the parent over IPC.
+const host = process.env.API_HOST;
+const server = createApp({ db, providers, ...relax });
+const ready = () => { const addr = srv.address(); const actual = typeof addr === 'object' && addr ? addr.port : port; console.log(`[api] listening on ${host ?? ''}:${actual} (db: ${file})`); process.send?.({ type: 'api-ready', port: actual }); };
+const srv = host ? server.listen(port, host, ready) : server.listen(port, ready);
