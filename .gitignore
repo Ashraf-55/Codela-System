@@ -7,3 +7,7 @@
 .next/
 data/
 *.tsbuildinfo
+docs/qa/evidence/test-results/*
+!docs/qa/evidence/test-results/.last-run.json
+docs/qa/evidence/playwright-report/data/
+apps/web/.build-lock/

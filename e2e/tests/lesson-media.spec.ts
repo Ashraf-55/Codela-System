@@ -13,7 +13,7 @@ test('Learn: owner uploads a lesson video + material in the course builder; a pa
   expect((await api.patch(`/api/v1/tenant/p/course/${course}`, { data: { status: 'published' }, headers: h })).status()).toBe(200);
   expect((await api.post('/api/v1/tenant/site/publish', { data: {}, headers: h })).status()).toBe(200);
 
-  const page = await ctx.newPage(); await page.goto('/app/course-builder'); await page.getByRole('combobox').first().selectOption(course);
+  const page = await ctx.newPage(); await page.goto('/app/course-builder'); await page.getByRole('main').getByRole('combobox').first().selectOption(course); // scoped: the header search box is a combobox too
   const rows = page.locator('tbody tr').filter({ hasText: 'Intro video' }); await expect(rows).toBeVisible();
   await rows.locator('input[type=file]').setInputFiles({ name: 'intro.mp4', mimeType: 'video/mp4', buffer: MP4 });
   await expect(rows.getByTestId('lesson-file-attached')).toBeVisible();

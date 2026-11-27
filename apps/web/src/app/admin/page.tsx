@@ -13,7 +13,7 @@ export default function Analytics() {
   return (
     <>
       <h1 style={{ fontSize: '1.6rem', margin: 0 }}>{t('analytics')}</h1>{d.simulated && <div className="alert warn" role="note">{t('simulatedNote')}</div>}
-      <div className="grid g4">
+      <div className="kpi-grid">
         <div className="card kpi"><span>{t('tenants')}</span><b>{d.tenants.total}</b><span className="small">{d.tenants.active} active · {d.tenants.suspended} suspended</span></div>
         {Object.entries(d.subscriptions).map(([k, v]) => <div key={k} className="card kpi"><span>{k}</span><b>{v}</b></div>)}
         {cur.map((c) => <div key={c} className="card kpi"><span>MRR ({c})</span><b className="mono">{fmtMoney(d.revenue[c].mrr, c, locale)}</b><span className="small">ARR {fmtMoney(d.revenue[c].arr, c, locale)}</span></div>)}

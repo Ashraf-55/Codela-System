@@ -45,15 +45,16 @@ export function EntityForm({ def, record, prefill, onSaved }: { def: EntityMeta;
     } catch (x) { const a = x as ApiError; setErrs(a.fields ?? {}); setMsg(a.message); setBusy(false); }
   }
   const control = (k: string, f: FieldMeta, v: Raw, on: (v: Raw) => void, id: string) => {
-    if (f.type === 'bool') return <input id={id} type="checkbox" checked={!!v} onChange={(e) => on(e.target.checked)} />;
-    if (f.type === 'enum') return <select id={id} value={v ?? ''} onChange={(e) => on(e.target.value)}><option value="">{t('select')}</option>{f.values!.map((o) => <option key={o} value={o}>{enumLabel(o, locale)}</option>)}</select>;
-    if (f.type === 'ref') return <select id={id} value={v ?? ''} onChange={(e) => on(e.target.value)}><option value="">{t('select')}</option>{app.refOptions(f.entity!).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}</select>;
-    if (f.type === 'text') return <textarea id={id} value={v ?? ''} onChange={(e) => on(e.target.value)} />;
+    const a = errs[k] ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-err` } : {};
+    if (f.type === 'bool') return <input id={id} {...a} type="checkbox" checked={!!v} onChange={(e) => on(e.target.checked)} />;
+    if (f.type === 'enum') return <select id={id} {...a} value={v ?? ''} onChange={(e) => on(e.target.value)}><option value="">{t('select')}</option>{f.values!.map((o) => <option key={o} value={o}>{enumLabel(o, locale)}</option>)}</select>;
+    if (f.type === 'ref') return <select id={id} {...a} value={v ?? ''} onChange={(e) => on(e.target.value)}><option value="">{t('select')}</option>{app.refOptions(f.entity!).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}</select>;
+    if (f.type === 'text') return <textarea id={id} {...a} value={v ?? ''} onChange={(e) => on(e.target.value)} />;
     if (f.type === 'url' && k === 'image') return ( // image: paste an https URL or upload a file (stored as a public file path, so type=text rather than type=url)
-      <span className="row"><input id={id} type="text" className="ltr" value={v ?? ''} onChange={(e) => on(e.target.value)} />
+      <span className="row"><input id={id} {...a} type="text" className="ltr" value={v ?? ''} onChange={(e) => on(e.target.value)} />
         <label className="btn sm">{locale === 'ar' ? 'رفع صورة' : 'Upload image'}<input type="file" hidden accept="image/png,image/jpeg,image/webp,image/gif" onChange={async (e) => { const file = e.target.files?.[0]; e.target.value = ''; if (!file) return; try { const r = await uploadFile('product', file); on(r.url); } catch (x) { setMsg((x as ApiError).message); } }} /></label></span>
     );
-    return <input id={id} type={inputType(f.type)} inputMode={f.type === 'int' || f.type === 'money' ? 'decimal' : undefined} className={['email', 'phone', 'url', 'money', 'int', 'date', 'time', 'datetime'].includes(f.type) ? 'ltr' : undefined} value={v ?? ''} onChange={(e) => on(e.target.value)} />;
+    return <input id={id} {...a} type={inputType(f.type)} inputMode={f.type === 'int' || f.type === 'money' ? 'decimal' : undefined} className={['email', 'phone', 'url', 'money', 'int', 'date', 'time', 'datetime'].includes(f.type) ? 'ltr' : undefined} value={v ?? ''} onChange={(e) => on(e.target.value)} />;
   };
   return (
     <form className="stack" onSubmit={submit} noValidate>
@@ -68,11 +69,11 @@ export function EntityForm({ def, record, prefill, onSaved }: { def: EntityMeta;
               <div><button type="button" className="btn sm" onClick={() => set(k, [...(vals[k] as Raw[]), Object.fromEntries(Object.entries(f.fields ?? {}).map(([sk, sf]) => [sk, sf.default !== undefined ? toRaw(sf, sf.default, app.currency) : sf.type === 'bool' ? false : '']))])}>{t('addRow')}</button></div>
               {errs[k] && <span className="err" role="alert">{errs[k].join(', ')}</span>}</div></fieldset>
         ) : (
-          <label key={k} className="field" htmlFor={`f-${k}`}>{fieldLabel(k, locale)}{f.required && ' *'}{control(k, f, vals[k], (v) => set(k, v), `f-${k}`)}
-            {f.type === 'money' && <span className="hint">{app.currency}</span>}{errs[k] && <span className="err" role="alert">{errs[k].join(', ')}</span>}</label>
+          <label key={k} className="field" htmlFor={`f-${k}`}><span>{fieldLabel(k, locale)}{f.required && <span className="req" aria-hidden="true">*</span>}{f.required && <span className="sr-only">{locale === 'ar' ? ' (مطلوب)' : ' (required)'}</span>}</span>{control(k, f, vals[k], (v) => set(k, v), `f-${k}`)}
+            {f.type === 'money' && <span className="hint">{app.currency}</span>}{errs[k] && <span className="err" id={`f-${k}-err`} role="alert">{errs[k].join(', ')}</span>}</label>
         ))}
       </div>
-      <div className="row"><button className="btn primary" disabled={busy}>{t('save')}</button></div>
+      <div className="row" style={{ paddingTop: 4 }}><button className="btn primary" disabled={busy} aria-busy={busy}>{busy ? (locale === 'ar' ? 'جارٍ الحفظ…' : 'Saving…') : t('save')}</button></div>
     </form>
   );
 }

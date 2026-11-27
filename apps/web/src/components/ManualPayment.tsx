@@ -61,15 +61,15 @@ export function ManualPayment({ canManage, onChanged, preselect }: { canManage: 
         {due > 0 && <div className="card flat" role="status"><div className="muted small">{t('حوّل هذا المبلغ بالضبط', 'Transfer exactly this amount')}</div><b className="mono" style={{ fontSize: '1.6rem' }}>{fmtMoney(due, cur, locale)}</b></div>}
         {chosen && <div className="alert info" role="note"><b>{METHOD[chosen.method]}</b>: <span className="mono">{chosen.handle}</span>{chosen.accountName && <> — {chosen.accountName}</>}{chosen.notes && <div className="small">{chosen.notes}</div>}</div>}
         <div className="grid g2">
-          <label className="field">{t('رقم العملية / المرجع', 'Transfer reference')}<input className="ltr" value={reference} maxLength={64} onChange={(e) => setReference(e.target.value)} /></label>
+          <label className="field">{t('رقم العملية / المرجع', 'Transfer reference')}<input className="ltr" data-testid="mp-reference" value={reference} maxLength={64} onChange={(e) => setReference(e.target.value)} /></label>
           <label className="field">{t('اسم المحوِّل (اختياري)', 'Payer name (optional)')}<input value={payer} maxLength={80} onChange={(e) => setPayer(e.target.value)} /></label>
         </div>
-        <label className="field">{t('صورة الإيصال (PNG / JPG / WEBP / PDF حتى 5 ميجا)', 'Receipt (PNG / JPG / WEBP / PDF, max 5 MB)')}<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
-        <div><button className="btn primary" disabled={busy || !canManage || reference.trim().length < 4 || !due} onClick={() => void submit()}>{busy ? '…' : t('إرسال للمراجعة', 'Submit for review')}</button></div>
+        <label className="field">{t('صورة الإيصال (PNG / JPG / WEBP / PDF حتى 5 ميجا)', 'Receipt (PNG / JPG / WEBP / PDF, max 5 MB)')}<input type="file" data-testid="mp-receipt" accept="image/png,image/jpeg,image/webp,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+        <div><button className="btn primary" data-testid="mp-submit" disabled={busy || !canManage || reference.trim().length < 4 || !due} onClick={() => void submit()}>{busy ? '…' : t('إرسال للمراجعة', 'Submit for review')}</button></div>
       </>)}
       {!!hist.data?.data.length && <div className="table-wrap"><table><thead><tr><th>{t('الطريقة', 'Method')}</th><th>{t('المرجع', 'Reference')}</th><th>{t('المبلغ', 'Amount')}</th><th>{t('الحالة', 'Status')}</th><th /></tr></thead><tbody>{hist.data.data.map((r) => (
         <tr key={r.id}><td>{METHOD[r.method] ?? r.method}{r.kind === 'addon' && <div className="small muted">{r.addOnKey}</div>}</td><td className="mono">{r.reference}</td><td className="mono">{fmtMoney(r.amount, r.currency, locale)}</td>
-          <td><span className={`badge ${r.status === 'approved' ? 'ok' : r.status === 'pending' ? 'warn' : 'bad'}`}>{statusLabel(r.status)}</span>{r.status === 'rejected' && r.reviewNote && <div className="small">{r.reviewNote}</div>}</td>
+          <td><span data-testid="mp-status" className={`badge ${r.status === 'approved' ? 'ok' : r.status === 'pending' ? 'warn' : 'bad'}`}>{statusLabel(r.status)}</span>{r.status === 'rejected' && r.reviewNote && <div className="small">{r.reviewNote}</div>}</td>
           <td><a className="btn sm" href={`/api/v1/tenant/subscription/manual-payments/${r.id}/receipt`} target="_blank" rel="noreferrer">{t('الإيصال', 'Receipt')}</a></td></tr>))}</tbody></table></div>}
     </section>
   );

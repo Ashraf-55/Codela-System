@@ -20,7 +20,7 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   const ip = clientIp(req.headers.get('x-forwarded-for'));
   if (ip) headers.set('x-forwarded-for', ip);
   const hasBody = !['GET', 'HEAD'].includes(req.method);
-  const r = await fetch(url, { method: req.method, headers, body: hasBody ? await req.arrayBuffer() : undefined, redirect: 'manual', cache: 'no-store' }).catch(() => null);
+  const r = await fetch(url, { method: req.method, headers, body: hasBody ? await req.arrayBuffer() : undefined, redirect: 'manual', cache: 'no-store' }).catch((e: unknown) => { const c = (e as { cause?: { code?: string; message?: string } })?.cause; console.error(`[web] API unreachable at ${API_URL}: ${c?.code ?? ''} ${c?.message ?? (e as Error)?.message ?? e}`); return null; });
   if (!r) return Response.json({ error: { code: 'UPSTREAM_UNAVAILABLE', message: 'The service is temporarily unavailable' } }, { status: 503 });
   const out = new Headers(); for (const k of PASS_BACK) { const v = r.headers.get(k); if (v) out.set(k, v); }
   const len = r.headers.get('content-length'); if (len && !r.headers.get('content-encoding')) out.set('content-length', len); // lets <video> know the size (and range responses stay exact)

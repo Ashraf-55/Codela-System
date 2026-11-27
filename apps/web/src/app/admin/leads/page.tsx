@@ -14,7 +14,7 @@ export default function Leads() {
   if (res.error) return <ErrorBox error={res.error} retry={res.reload} />;
   return (
     <><h1 style={{ fontSize: '1.6rem', margin: 0 }}>{t('leads')}</h1>
-      {pipe.data && <div className="grid g4">{STAGES.map((s) => <button key={s} className="card kpi" style={{ textAlign: 'start', cursor: 'pointer' }} onClick={() => setStage(stage === s ? '' : s)} aria-pressed={stage === s}><span>{enumLabel(s, locale)}</span><b>{pipe.data!.data.stages[s]}</b></button>)}
+      {pipe.data && <div className="kpi-grid">{STAGES.map((s) => <button key={s} className="card kpi" style={{ textAlign: 'start', cursor: 'pointer' }} onClick={() => setStage(stage === s ? '' : s)} aria-pressed={stage === s}><span>{enumLabel(s, locale)}</span><b>{pipe.data!.data.stages[s]}</b></button>)}
         <div className="card kpi"><span>Conversion</span><b>{pipe.data.data.conversionRate === null ? '—' : `${Math.round(pipe.data.data.conversionRate * 100)}%`}</b></div></div>}
       {msg && <div className="alert error" role="alert">{msg}</div>}
       {!res.data ? <Loading /> : <div className="table-wrap"><table><thead><tr><th>{t('name')}</th><th>{t('phone')}</th><th>{t('email')}</th><th>{t('products')}</th><th>{t('stage')}</th></tr></thead><tbody>{res.data.data.map((l) => (

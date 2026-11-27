@@ -1,3 +1,11 @@
+# Accessibility report — seventh pass (2026-11-27)
+
+axe-core (WCAG 2.0/2.1 A + AA) over platform pages and, for each of the ten products, the published site (desktop + mobile) and the owner screens: **zero violations of any impact** in the final run (the spec appends one row to `docs/qa/evidence/a11y-results.jsonl` per violation; the final run created no file).
+Found and fixed during the redesign: link/button accessible names not containing their visible text (logo, account button), low-contrast counter in the sidebar.
+Additional fixes beyond axe: sortable column headers are now buttons with `aria-sort`; form errors set `aria-invalid` and are linked with `aria-describedby`; required fields announce "(required)"; confirmations use a native modal `<dialog>` (focus-trapped, Escape cancels); toasts use `role=status`; global search exposes combobox/listbox/option with `aria-activedescendant`; drawers expose `aria-expanded`/`aria-controls` and close with Escape; reduced motion disables all transitions.
+Not done: manual screen-reader walkthrough (NVDA/VoiceOver), Firefox/WebKit.
+
+---
 # Accessibility report
 
 Scope: the whole application — public platform pages, all ten products' published sites (desktop + mobile), the owner dashboard of every product (dashboard, settings, site builder, team, roles) and the Super Admin login.

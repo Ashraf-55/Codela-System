@@ -1,3 +1,16 @@
+# SECURITY — seventh-pass review (2026-11-27)
+
+Re-verified against the code (not the documents): session tokens stored as SHA-256 only, httpOnly cookies, HMAC double-submit CSRF on every authenticated write, tenant taken only from the server-side session or a verified host, every record query filtered by `tenant_id` (`getRecord`, `listRecords`, `findWhere`), per-entity permission checks on read/create/update/delete/approve/export, CSV formula-injection neutralised, LIKE wildcards escaped, JSON field paths bound as parameters, uploads validated by magic bytes (SVG/HTML/XML/scripts rejected) and served with `nosniff` + `CSP: sandbox`, no `dangerouslySetInnerHTML` in the web app, map popups built with `textContent`, rate limits on auth / public forms / global, conservative CSP + HSTS in production, strict nonce CSP opt-in (`CSP_STRICT=1`).
+
+Findings this pass:
+| Severity | Finding | Fix |
+|---|---|---|
+| High (data integrity / authorisation) | lapsed subscriptions got one write-capable request (`tick` single-step) | catch-up + tests |
+| Low | business name in Arabic copy could reorder surrounding text (spoof-looking headings) | Unicode isolates |
+
+`npm audit --omit=dev`: 0 vulnerabilities. The two new runtime dependencies are font files only (`@fontsource-variable/plus-jakarta-sans`, `@fontsource/ibm-plex-sans-arabic`, OFL). Not done: external penetration test.
+
+---
 # SECURITY
 
 ## Implemented controls (each is covered by tests unless noted)

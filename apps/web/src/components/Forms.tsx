@@ -21,7 +21,7 @@ export function ContactForm() {
       <div className="grid g2"><label className="field">{t('email')}<input name="email" type="email" autoComplete="email" className="ltr" /></label><label className="field">{t('phone')}<input name="phone" type="tel" autoComplete="tel" className="ltr" /></label></div>
       <label className="field">{t('company')}<input name="company" autoComplete="organization" /></label>
       <label className="field">{t('message')}<textarea name="message" /></label>
-      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />
+      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
       <button className="btn primary" disabled={state === 'busy'}>{t('send')}</button>
     </form>
   );

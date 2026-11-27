@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { ErrorBox, Loading, useApp, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Rec { id: string; code: string | null; data: Record<string, any>; createdAt?: string }
 
@@ -18,7 +18,7 @@ export default function Cash() {
   if (rows.error) return <ErrorBox error={rows.error} retry={rows.reload} />; if (!rows.data) return <Loading />;
   const settle = async (list: Rec[], who: string) => {
     const total = list.reduce((a, r) => a + Number(r.data.amount ?? 0), 0);
-    if (!window.confirm(t(`تأكيد استلام ${app.money(total)} من ${who}؟ التسوية نهائية.`, `Confirm you received ${app.money(total)} from ${who}? Settlement is final.`))) return;
+    if (!(await confirmDialog(t(`تأكيد استلام ${app.money(total)} من ${who}؟ التسوية نهائية.`, `Confirm you received ${app.money(total)} from ${who}? Settlement is final.`)))) return;
     setBusy(who); setMsg(null); let done = 0;
     try { for (const r of list) { await api(`/tenant/p/cashCollection/${r.id}`, { method: 'PATCH', body: { status: 'settled' } }); done++; } setMsg({ ok: true, text: t(`تمت تسوية ${done} تحصيل.`, `${done} collection(s) settled.`) }); }
     catch (e) { setMsg({ ok: false, text: `${(e as ApiError).message} (${done}/${list.length})` }); } finally { setBusy(''); rows.reload(); }
