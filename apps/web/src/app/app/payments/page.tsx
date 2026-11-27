@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { confirmDialog } from '@/components/Providers';
 import { useState } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { enumLabel } from '@/lib/i18n';
@@ -28,7 +29,7 @@ export default function Payments() {
     catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } finally { setBusy(null); }
   }
   const refund = (r: Rec) => { const why = window.prompt(t('سبب الاسترداد (إلزامي). سيُسجَّل في سجل الاسترداد الخاص بالمنتج.', 'Refund reason (required). It is recorded in the product\'s own refund records.')); if (why && why.trim()) void review(r, { status: 'refunded', reviewNote: why.trim() }); };
-  const approve = (r: Rec) => { if (window.confirm(t(`تأكد أن المبلغ في الإيصال ${app.money(Number(r.data.amount))} ثم اقبل الدفع؟`, `Confirm the receipt shows ${app.money(Number(r.data.amount))}, then approve?`))) void review(r, { status: 'approved' }); };
+  const approve = async (r: Rec) => { if (await confirmDialog(t(`تأكد أن المبلغ في الإيصال ${app.money(Number(r.data.amount))} ثم اقبل الدفع؟`, `Confirm the receipt shows ${app.money(Number(r.data.amount))}, then approve?`))) void review(r, { status: 'approved' }); };
 
   return (
     <div className="stack">

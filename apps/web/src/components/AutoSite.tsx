@@ -63,7 +63,7 @@ export function AutoSite({ services, initial, locale, currency, site }: { servic
             {kind === 'quote' && partId && <div className="alert info row between" role="status"><span>{t('القطعة:', 'Part:')} <b>{chosen?.name ?? partId}</b></span><button type="button" className="btn sm" onClick={() => setPartId('')}>{t('إزالة', 'Remove')}</button></div>}
             {kind === 'booking' && <div className="grid g2"><label className="field">{t('التاريخ المفضل', 'Preferred date')}<input name="preferredDate" type="date" className="ltr" min={new Date().toISOString().slice(0, 10)} /></label><label className="field">{t('الوقت المفضل', 'Preferred time')}<input name="preferredTime" type="time" className="ltr" /></label></div>}
             <label className="field">{kind === 'booking' ? t('وصف المشكلة', 'Describe the problem') : t('تفاصيل الطلب', 'Details')}<textarea name="message" /></label>
-            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />
+            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
             <div><button className="btn primary" disabled={state === 'busy'}>{state === 'busy' ? '…' : t('إرسال', 'Send')}</button></div>
           </form>)}
       </div></section>

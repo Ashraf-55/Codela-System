@@ -21,8 +21,8 @@ function Review({ r, onDone }: { r: Row; onDone: () => void }) {
   }
   return (
     <div className="stack"><div className="small muted">{t('اكتب المبلغ الظاهر في الإيصال للموافقة', 'Type the amount shown on the receipt to approve')}</div>
-      <div className="row"><input className="ltr" style={{ maxWidth: 140 }} value={amt} placeholder={fromMinor(r.amount, r.currency)} onChange={(e) => setAmt(e.target.value)} aria-label="amount" />
-        <button className="btn sm primary" disabled={!amt} onClick={() => void go('approve')}>{t('موافقة', 'Approve')}</button></div>
+      <div className="row"><input className="ltr" style={{ maxWidth: 140 }} value={amt} placeholder={fromMinor(r.amount, r.currency)} onChange={(e) => setAmt(e.target.value)} aria-label="amount" data-testid="review-amount" />
+        <button className="btn sm primary" data-testid="review-approve" disabled={!amt} onClick={() => void go('approve')}>{t('موافقة', 'Approve')}</button></div>
       <div className="row"><input value={reason} placeholder={t('سبب الرفض', 'Rejection reason')} onChange={(e) => setReason(e.target.value)} aria-label="reason" />
         <button className="btn sm danger" disabled={reason.trim().length < 3} onClick={() => void go('reject')}>{t('رفض', 'Reject')}</button></div>
       {msg && <div className="alert error" role="alert">{msg}</div>}</div>

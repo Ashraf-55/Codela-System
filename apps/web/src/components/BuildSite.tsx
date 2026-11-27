@@ -46,7 +46,7 @@ export function BuildSite({ services, projects, team, locale, site }: { services
             <label className="field">{t('موقع المشروع', 'Project location')}<input name="location" /></label>
             {kind === 'inspection' && <label className="field">{t('التاريخ المفضل للمعاينة', 'Preferred inspection date')}<input name="preferredDate" type="date" className="ltr" min={new Date().toISOString().slice(0, 10)} /></label>}
             <label className="field">{t('تفاصيل', 'Details')}<textarea name="message" /></label>
-            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />
+            <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
             <div><button className="btn primary" disabled={state === 'busy'}>{state === 'busy' ? '…' : t('إرسال', 'Send')}</button></div></form>)}
       </div></section>
     </>

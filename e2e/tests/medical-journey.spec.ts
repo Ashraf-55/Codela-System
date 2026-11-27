@@ -24,7 +24,7 @@ test('Codela Med: full clinic workflow', async ({ browser }) => {
 
   // 3-4. Dashboard / medical product UI is reachable and shows the medical work board entry
   await page.goto('/app'); await expect(page).toHaveURL(/\/app/);
-  await page.goto('/app/board'); await expect(page.locator('main, body')).toBeVisible();
+  await page.goto('/app/board'); await expect(page.locator('main#main')).toBeVisible();
 
   // 5-8. Specialty, doctor, patient
   const spec = await create('specialty', { name: 'Cardiology' });

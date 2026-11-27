@@ -21,7 +21,7 @@ export function PublicForm({ formKey, label, fields, refs, locale, site }: { for
           {s.type === 'text' ? <textarea name={k} /> : s.type === 'enum' ? <select name={k}><option value="" />{s.values!.map((v) => <option key={v} value={v}>{enumLabel(v, locale)}</option>)}</select>
             : s.type === 'ref' ? <select name={k}><option value="" />{(refs[s.entity!] ?? []).map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}</select>
             : <input name={k} className={['phone', 'email', 'date', 'time', 'int'].includes(s.type) ? 'ltr' : undefined} type={s.type === 'email' ? 'email' : s.type === 'phone' ? 'tel' : s.type === 'date' ? 'date' : s.type === 'time' ? 'time' : 'text'} />}</label>))}</div>
-      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />
+      <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
       <div><button className="btn primary" disabled={state === 'busy'}>{locale === 'ar' ? 'إرسال' : 'Send'}</button></div>
     </form>
   );

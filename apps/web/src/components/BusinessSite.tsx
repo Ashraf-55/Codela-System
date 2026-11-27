@@ -15,7 +15,7 @@ export function BusinessSite({ services, industries, portfolio, team, jobs, loca
     for (const k of ['name', 'phone', 'email', 'message', 'cvUrl']) { const v = String(f.get(k) ?? '').trim(); if (v) body[k] = v; }
     try { await api(`/public/forms/${formKey}`, { method: 'POST', body, site }); setState((s) => ({ ...s, [formKey]: 'done' })); } catch (x) { setErr((s) => ({ ...s, [formKey]: (x as ApiError).message })); setState((s) => ({ ...s, [formKey]: 'idle' })); }
   }
-  const hp = <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />;
+  const hp = <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />;
   const cards = (rows: BzItem[]) => <div className="grid g3">{rows.map((r) => <article key={r.id} className="card stack"><b>{r.name ?? r.title}</b>{r.description && <p className="small muted">{r.description}</p>}</article>)}</div>;
   return (
     <>

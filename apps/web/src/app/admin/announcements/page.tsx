@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { PRODUCT_NAMES } from '@/lib/content';
 import { ErrorBox, Loading, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Ann { id: string; titleAr: string; titleEn: string; bodyAr: string; bodyEn: string; level: string; productSlug: string | null; startsAt: string | null; endsAt: string | null; active: boolean }
 const blank = { titleAr: '', titleEn: '', bodyAr: '', bodyEn: '', level: 'info', productSlug: '', startsAt: '', endsAt: '', active: true };
@@ -17,7 +17,7 @@ export default function Announcements() {
   const body = () => ({ titleAr: form!.titleAr, titleEn: form!.titleEn, bodyAr: form!.bodyAr, bodyEn: form!.bodyEn, level: form!.level, productSlug: form!.productSlug || null, startsAt: form!.startsAt || null, endsAt: form!.endsAt || null, active: form!.active });
   async function save() { setBusy(true); setMsg(null); try { if (form!.id) await api(`/platform/announcements/${form!.id}`, { method: 'PATCH', scope: 'platform', body: body() }); else await api('/platform/announcements', { method: 'POST', scope: 'platform', body: body() }); setForm(null); setMsg({ ok: true, text: t('تم الحفظ', 'Saved') }); res.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } finally { setBusy(false); } }
   async function toggle(a: Ann) { setMsg(null); try { await api(`/platform/announcements/${a.id}`, { method: 'PATCH', scope: 'platform', body: { active: !a.active } }); res.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } }
-  async function remove(a: Ann) { if (!window.confirm(t('حذف هذا الإعلان؟', 'Delete this announcement?'))) return; setMsg(null); try { await api(`/platform/announcements/${a.id}`, { method: 'DELETE', scope: 'platform' }); res.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } }
+  async function remove(a: Ann) { if (!(await confirmDialog(t('حذف هذا الإعلان؟', 'Delete this announcement?'), { danger: true }))) return; setMsg(null); try { await api(`/platform/announcements/${a.id}`, { method: 'DELETE', scope: 'platform' }); res.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } }
   if (res.error) return <ErrorBox error={res.error} retry={res.reload} />; if (!res.data) return <Loading />;
   const set = (k: string, v: string | boolean) => setForm((f) => ({ ...f!, [k]: v }));
   return (
