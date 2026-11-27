@@ -1,7 +1,11 @@
-// Production entry for hosts that run ONE Node process per app (Hostinger Web Apps, Passenger-style runners).
-// The website (Next.js) runs inside this process and listens right away (Hostinger requires the entry process itself
-// to call listen() within 3 seconds); the API runs as a private child process on a free 127.0.0.1 port.
-// Next.js and tsx run with this same Node binary (process.execPath): the host may start apps without npm on PATH.
+// Production entry for hosts that run ONE Node process per app (Hostinger Web Apps, LiteSpeed/Passenger-style runners).
+// Everything runs in this single process:
+//  * it listens right away (Hostinger requires the entry process itself to call listen() within 3 seconds);
+//  * the website (Next.js) is served in-process (custom server);
+//  * the API (Express) is built in-process too, and the website's server-side fetch() calls to the internal origin
+//    http://codela-api.internal are handed to it in memory (apps/api/src/inproc.ts). No internal network is used — on
+//    Hostinger, connections between processes on 127.0.0.1 are refused (ECONNREFUSED), and listen() calls in the
+//    entry process are captured by the host.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -10,14 +14,14 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const at = (p) => fileURLToPath(new URL(p, import.meta.url));
-const root = at('../'), webDir = at('../apps/web/'), apiDir = at('../apps/api/');
+const root = at('../'), webDir = at('../apps/web/');
 const webRequire = createRequire(at('../apps/web/package.json'));
+const apiRequire = createRequire(at('../apps/api/package.json'));
 const nextBin = webRequire.resolve('next/dist/bin/next');
-// tsx as an in-process loader (not its CLI, which forks a second process the IPC channel would not reach)
-const tsxLoader = pathToFileURL(createRequire(at('../apps/api/package.json')).resolve('tsx')).href;
 const val = (v, d) => (v && v.trim() ? v.trim() : d); // an empty variable in a hosting panel counts as unset
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(`[start-all] ${m}`);
+const INTERNAL = 'http://codela-api.internal';
 process.env.NODE_ENV = val(process.env.NODE_ENV, 'production'); // so NODE_ENV need not be set in the panel (setting it there makes npm skip build tools)
 
 // Hostinger deploys each version into .../hbuilds/versions/<id>/: data kept there would vanish on the next deploy.
@@ -33,10 +37,10 @@ if (hb.length > 1) {
 let handler = (_req, res) => { res.writeHead(503, { 'content-type': 'text/html; charset=utf-8', 'retry-after': '10' });
   res.end('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="10"><title>Codela</title><body style="font-family:system-ui;display:grid;place-items:center;min-height:90vh;color:#334"><div><h1>Codela is starting…</h1><p>This page refreshes by itself.</p></div>'); };
 const server = createServer((req, res) => handler(req, res));
-server.listen(Number(val(process.env.PORT, '3000')), () => log(`listening on ${val(process.env.PORT, '3000')}`)); // first thing: the host waits for this
-
-let api = null, stopping = false;
-function stop(code) { if (stopping) return; stopping = true; api?.kill('SIGTERM'); server.close(); setTimeout(() => process.exit(code), 2000).unref(); }
+const webPort = Number(val(process.env.PORT, '3000')); // read once: the API's env loader may add variables later
+server.listen(webPort, () => log(`listening on ${webPort}`)); // first thing: the host waits for this
+let stopping = false;
+function stop(code) { if (stopping) return; stopping = true; server.close(); setTimeout(() => process.exit(code), 2000).unref(); }
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => stop(0));
 
 async function buildIfMissing() {
@@ -54,24 +58,45 @@ async function buildIfMissing() {
   if (r.code !== 0) throw new Error(`build failed (exit ${r.code}, signal ${r.signal ?? '-'}${r.error ? `, ${r.error.message}` : ''}); the lines above show why`);
 }
 
+/** Load the TypeScript API in this process (tsx loader only while importing it) and route fetch(INTERNAL/...) to it in memory. */
+async function mountApi() {
+  const { register } = await import(pathToFileURL(apiRequire.resolve('tsx/esm/api')).href);
+  const unregister = register();
+  const { installCrashHandlers } = await import(pathToFileURL(at('../apps/api/src/monitoring.ts')).href);
+  const { buildApi } = await import(pathToFileURL(at('../apps/api/src/build.ts')).href);
+  const { createBridge } = await import(pathToFileURL(at('../apps/api/src/inproc.ts')).href); // tested in apps/api/test/inprocess-bridge.test.ts
+  await unregister();
+  installCrashHandlers();
+  const { app, file } = buildApi();
+  const bridge = createBridge(app);
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async function codelaFetch(input, init) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (!url.startsWith(`${INTERNAL}/`)) return realFetch(input, init);
+    const reqObj = input instanceof Request ? input : null;
+    const method = (init?.method ?? reqObj?.method ?? 'GET').toUpperCase();
+    const headers = Object.fromEntries(new Headers(init?.headers ?? reqObj?.headers ?? {}));
+    let payload = init?.body ?? (reqObj && !['GET', 'HEAD'].includes(method) ? await reqObj.arrayBuffer() : undefined);
+    if (payload instanceof ArrayBuffer) payload = Buffer.from(payload); else if (ArrayBuffer.isView(payload)) payload = Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength);
+    // the bridge presents the caller as 127.0.0.1 = the website itself, the same trusted hop the API saw before (TRUST_PROXY=loopback)
+    const r = await bridge({ method, url: url.slice(INTERNAL.length), headers, payload });
+    const out = new Headers(); for (const [k, v] of r.headers) out.append(k, v);
+    const noBody = method === 'HEAD' || [101, 204, 205, 304].includes(r.status);
+    return new Response(noBody ? null : r.body, { status: r.status, headers: out });
+  };
+  process.env.API_URL = INTERNAL; // read by the website's server code (lib/server-api.ts) when it first loads
+  log(`API mounted in-process (db: ${file})`);
+}
+
 async function main() {
   await buildIfMissing();
-  // The API picks its own free port (PORT=0) and reports it over IPC: this process must not open any other socket,
-  // because Hostinger's runner captures listen() calls made in the entry process.
-  api = spawn(process.execPath, ['--import', tsxLoader, 'src/server.ts'], { cwd: apiDir, stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
-    env: { ...process.env, PORT: val(process.env.API_PORT, '0'), API_HOST: '127.0.0.1' } }); // 'ipc' also lets the API exit when this process dies
-  api.on('exit', (code) => { log(`api exited (${code}); stopping`); stop(code ?? 1); });
-  const apiPort = await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('the API did not start within 90 s')), 90_000);
-    api.on('message', (m) => { if (m?.type === 'api-ready') { clearTimeout(t); res(m.port); } }); });
-  process.env.API_URL = val(process.env.API_URL, `http://127.0.0.1:${apiPort}`); // set before Next.js loads the modules that read it
-  // self-check: can this process reach the API? (logs the exact error if the host blocks loopback connections)
-  try { const r = await fetch(`${process.env.API_URL}/api/v1/health`, { signal: AbortSignal.timeout(5000) }); log(`API self-check: HTTP ${r.status}`); }
-  catch (e) { log(`API self-check FAILED: ${e?.cause?.code ?? ''} ${e?.cause?.message ?? e?.message ?? e}`); }
+  await mountApi();
   process.chdir(webDir);
   const app = webRequire('next')({ dev: false, dir: webDir });
   await app.prepare();
   const handle = app.getRequestHandler();
   handler = (req, res) => handle(req, res);
-  log(`website ready; API on 127.0.0.1:${apiPort}`);
+  try { const r = await fetch(`${INTERNAL}/api/v1/health`); log(`API self-check: HTTP ${r.status}`); } catch (e) { log(`API self-check FAILED: ${e?.message ?? e}`); }
+  log('website ready');
 }
 main().catch((e) => { console.error(`[start-all] ${e?.stack ?? e}`); stop(1); });
