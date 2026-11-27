@@ -5,6 +5,7 @@ import { providersFromEnv } from './providers/notify';
 import { startOutboxWorker } from './outbox';
 import { installCrashHandlers } from './monitoring';
 import { startAddOnScheduler } from './addon-lifecycle';
+import { bootstrapAdmin } from './bootstrap-admin';
 
 loadEnv();
 installCrashHandlers();
@@ -12,6 +13,7 @@ const port = Number(process.env.PORT ?? 4000);
 const file = databaseFile();
 const db = createDb(file);   // applies pending migrations
 seedPlatform(db);            // idempotent: never overwrites admin edits
+bootstrapAdmin(db, process.env).then((r) => r === 'created' && console.log('[api] first super admin created from ADMIN_EMAIL')).catch((e) => console.error(`[api] could not create the first super admin: ${(e as Error).message}`));
 const providers = providersFromEnv();
 startOutboxWorker(db, providers);
 startAddOnScheduler(db);     // monthly add-on renewals / expiry (hourly, idempotent)
