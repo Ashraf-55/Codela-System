@@ -1,0 +1,3 @@
+module.exports=[30052,a=>{"use strict";var b=a.i(87924),c=a.i(38569),d=a.i(66594);a.s(["default",0,function(){let{locale:a}=(0,d.useI18n)();return(0,b.jsxs)(b.Fragment,{children:[(0,b.jsx)("h1",{style:{fontSize:"1.6rem",margin:0},children:"ar"===a?"الأمان":"Security"}),(0,b.jsx)(c.f,{scope:"platform",locale:a})]})}])}];
+
+//# sourceMappingURL=apps_web_src_app_admin_security_page_tsx_13vz-sxijtn4l._.js.map

@@ -1,27 +1,42 @@
 # Deploying on Hostinger (Business / Cloud "Web Apps")
 
-One web app runs everything: `npm start` (`scripts/start-all.mjs`) starts the API privately on 127.0.0.1:4000 and the website on the port Hostinger gives (`PORT`).
+One web app runs everything: `scripts/start-all.mjs` starts the API privately on 127.0.0.1:4000 and the website on the port Hostinger gives (`PORT`). It runs Next.js and tsx with Node directly (Hostinger starts apps without `npm` on PATH).
 
+## Ship a prebuilt website (shared plans)
+Shared hosting caps processes and threads, so `next build` fails there (`spawn node EAGAIN`). Build on a Linux/Windows/macOS machine and commit the result to the deploy branch:
+
+```bash
+npm ci
+npm run build
+git add .
+git add -f apps/web/.next ':!apps/web/.next/cache'
+git commit -m "deploy: prebuilt website"
+git push
+```
+Rebuild and re-push `apps/web/.next` after every change to `apps/web` or `packages/*`. If `apps/web/.next/BUILD_ID` is missing, `start-all` tries a low-resource build on the server (works on a VPS, usually not on shared plans).
+
+## hPanel settings
 | Setting | Value |
 |---|---|
-| Node.js | 22 or newer |
-| Build command | `npm run build` (install: `npm ci`) |
-| Start command | `npm start` |
-| Domain | e.g. `saas.codela.tech` |
+| Framework preset | Express |
+| Node.js | 22 |
+| Entry file | `scripts/start-all.mjs` |
+| Domain | `saas.codela.tech` |
 
-## Environment variables (hPanel)
+## Environment variables
 | Name | Value |
 |---|---|
-| `NODE_ENV` | `production` |
-| `CSRF_SECRET` | 64 random characters (never share) |
+| `WEB_HOSTS` | `saas.codela.tech` — **required**: hosts that serve Codela itself; any other host is treated as a customer website |
 | `ROOT_DOMAIN` | `saas.codela.tech` |
-| `PAYMENT_PROVIDER` | `sandbox` while testing (manual InstaPay / Vodafone Cash works without it) |
-| `DATABASE_FILE` | `../codela-data/codela.db` — **outside** the app folder so redeploys keep the data |
+| `CSRF_SECRET` | 64 random characters (never share) |
+| `TRUST_PROXY` | `loopback` |
+| `PAYMENT_PROVIDER` | `sandbox` while testing |
+| `DATABASE_FILE` | `../codela-data/codela.db` — outside the app folder so redeploys keep the data |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | first Super Admin, created on first start only when no admin exists; remove after logging in |
 
-Later: `RESEND_API_KEY` (e-mail), `TWILIO_*` (SMS), `WHATSAPP_*` (WhatsApp) — see `.env.example`.
+Do **not** set `NODE_ENV` or `PORT` in the panel (`NODE_ENV=production` makes the install skip build tools; `start-all` sets it itself; Hostinger provides `PORT`).
 
-## Limits on this kind of hosting
+## Limits on shared hosting
 * Customer sites open at `https://saas.codela.tech/sites/<business-slug>` (subdomains per customer need wildcard DNS + TLS → VPS).
-* SQLite lives in one file: back up `codela-data/` regularly (`npm run backup` on a VPS).
-* If the host cannot run the monorepo build or keep two processes, use a Hostinger VPS with `docker compose up -d` (`docker-compose.yml`, `deploy/`).
+* SQLite is one file: back up `codela-data/` regularly.
+* A VPS avoids all of the above: `docker compose up -d` (`docker-compose.yml`, `deploy/`).

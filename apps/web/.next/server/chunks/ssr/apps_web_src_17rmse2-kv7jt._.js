@@ -1,0 +1,3 @@
+module.exports=[49755,a=>{"use strict";var b=a.i(7997),c=a.i(16256);a.s(["default",0,function({children:a}){return(0,b.jsx)(c.AdminShell,{children:a})},"metadata",0,{title:"Admin",robots:{index:!1}}])},98861,function(a){a.n(a.i(49755))},54638,a=>{"use strict";let b=(0,a.i(11857).registerClientReference)(function(){throw Error("Attempted to call AdminShell() from the server but AdminShell is on the client. It's not possible to invoke a client function from the server, it can only be rendered as a Component or passed to props of a Client Component.")},"[project]/apps/web/src/components/admin/AdminShell.tsx","AdminShell");a.s(["AdminShell",0,b])},16256,a=>{"use strict";var b=a.i(54638);a.n(b)}];
+
+//# sourceMappingURL=apps_web_src_17rmse2-kv7jt._.js.map
