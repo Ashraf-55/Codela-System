@@ -1,6 +1,6 @@
 # Deploying on Hostinger (Business / Cloud "Web Apps")
 
-One web app runs everything. `scripts/start-all.mjs` listens immediately (Hostinger requires the entry process itself to call `listen()` within 3 s), serves the website in-process (Next.js custom server) and runs the API as a private child on a free 127.0.0.1 port; the API exits if its parent dies. Node runs Next.js and tsx directly (Hostinger starts apps without `npm` on PATH).
+One web app runs everything. `scripts/start-all.mjs` listens immediately (Hostinger requires the entry process itself to call `listen()` within 3 s), serves the website in-process (Next.js custom server) and runs the API as a private child bound to 127.0.0.1 on a port the OS picks (PORT=0), which the API reports back over IPC — the entry process opens no other socket, because Hostinger captures listen() calls made there. The API exits if its parent dies. Node runs Next.js and tsx directly (Hostinger starts apps without `npm` on PATH).
 
 **Data survives redeploys automatically:** Hostinger puts each deploy in `…/hbuilds/versions/<id>/`; unless `DATABASE_FILE` / `UPLOAD_DIR` are absolute paths, `start-all` keeps them in `…/domains/<domain>/codela-data/`.
 
