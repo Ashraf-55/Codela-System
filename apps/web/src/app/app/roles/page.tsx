@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { ErrorBox, Loading, useApp, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Role { name: string; labelEn: string; labelAr: string; custom: boolean; permissions?: string[] }
 interface Catalog { modules: { module: string; labelEn: string; labelAr: string; actions: string[] }[]; core: string[] }
@@ -29,7 +29,7 @@ export default function RolesPage() {
       setMsg({ ok: true, text: t('تم الحفظ', 'Saved') }); setEditing(null); roles.reload();
     } catch (e) { const a = e as ApiError; setMsg({ ok: false, text: a.message + (a.fields ? ' — ' + Object.entries(a.fields).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ') : '') }); } finally { setBusy(false); }
   }
-  async function remove(r: Role) { if (!window.confirm(t(`حذف الدور ${r.name}؟`, `Delete role ${r.name}?`))) return; setMsg(null); try { await api(`/tenant/roles/${r.name}`, { method: 'DELETE' }); roles.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } }
+  async function remove(r: Role) { if (!(await confirmDialog(t(`حذف الدور ${r.name}؟`, `Delete role ${r.name}?`), { danger: true }))) return; setMsg(null); try { await api(`/tenant/roles/${r.name}`, { method: 'DELETE' }); roles.reload(); } catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } }
   return (
     <>
       <div className="row between"><h1 style={{ fontSize: '1.6rem', margin: 0 }}>{t('الأدوار والصلاحيات', 'Roles & permissions')}</h1><button className="btn primary" onClick={startNew}>{t('دور جديد', 'New role')}</button></div>

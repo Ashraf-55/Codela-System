@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { confirmDialog } from '@/components/Providers';
 import { ApiError, api } from '@/lib/api';
 import { fmtMoney, type Locale } from '@/lib/i18n';
 
@@ -70,7 +71,7 @@ export function MedicalBooking({ doctors, services, locale, currency, site, doct
     try { setLook((await api<any>(`/public/actions/status?code=${encodeURIComponent(a.code)}&phone=${encodeURIComponent(a.phone)}`, { site })).data); setAuth(a); } catch (x) { setMsg((x as ApiError).message); }
   }
   async function cancel() {
-    if (!confirm(t('هل تريد إلغاء الموعد؟', 'Cancel this appointment?'))) return;
+    if (!(await confirmDialog(t('هل تريد إلغاء الموعد؟', 'Cancel this appointment?'), { danger: true }))) return;
     try { await api('/public/actions/cancel', { method: 'POST', site, body: auth }); setLook((await api<any>(`/public/actions/status?code=${auth.code}&phone=${encodeURIComponent(auth.phone)}`, { site })).data); setMsg(t('تم إلغاء الموعد.', 'Appointment cancelled.')); } catch (x) { setMsg((x as ApiError).message); }
   }
   return (

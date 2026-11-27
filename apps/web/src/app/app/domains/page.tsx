@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { enumLabel } from '@/lib/i18n';
 import { ErrorBox, Loading, useApp, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Dom { id: string; hostname: string; status: string; isPrimary: boolean; sslStatus: string; dns: { txtName: string; txtValue: string } }
 export default function Domains() {
@@ -21,7 +21,7 @@ export default function Domains() {
         <section key={d.id} className="card stack"><div className="row between"><b className="mono">{d.hostname}</b><div className="row"><span className={`badge ${d.status === 'verified' ? 'ok' : 'warn'}`}>{enumLabel(d.status, locale)}</span>{d.isPrimary && <span className="badge info">primary</span>}<span className="badge">{d.sslStatus}</span></div></div>
           {d.status !== 'verified' && <div className="small"><p>{t('dnsHelp')}</p><div className="mono">{d.dns.txtName}<br />{d.dns.txtValue}</div></div>}
           <div className="row">{d.status !== 'verified' && <button className="btn sm primary" onClick={() => call(`/tenant/domains/${d.id}/verify`)}>{t('verify')}</button>}
-            {d.status === 'verified' && !d.isPrimary && <button className="btn sm" onClick={() => call(`/tenant/domains/${d.id}/primary`)}>{t('makePrimary')}</button>}<button className="btn sm danger" onClick={() => window.confirm(t('confirmDelete')) && call(`/tenant/domains/${d.id}`, 'DELETE')}>{t('delete')}</button></div></section>))}
+            {d.status === 'verified' && !d.isPrimary && <button className="btn sm" onClick={() => call(`/tenant/domains/${d.id}/primary`)}>{t('makePrimary')}</button>}<button className="btn sm danger" onClick={async () => (await confirmDialog(t('confirmDelete'), { danger: true })) && call(`/tenant/domains/${d.id}`, 'DELETE')}>{t('delete')}</button></div></section>))}
       {!res.data.data.length && <div className="card muted">{t('empty')}</div>}
     </>
   );

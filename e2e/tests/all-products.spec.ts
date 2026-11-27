@@ -42,7 +42,7 @@ for (const product of PRODUCTS) {
 
     test('dashboard: owner sees it, logout works, the session is gone afterwards', async ({ browser }) => {
       const b = await register(browser, product); const page = await b.ctx.newPage(); const problems = watch(page);
-      await page.goto('/app'); await expect(page).toHaveURL(/\/app/); await expect(page.locator('main, body')).toBeVisible();
+      await page.goto('/app'); await expect(page).toHaveURL(/\/app/); await expect(page.locator('main#main')).toBeVisible(); // the dashboard shell rendered (a 'main, body' locator matched two elements: strict-mode error)
       for (const v of VIEWPORTS.slice(1)) { await page.setViewportSize({ width: v.width, height: v.height }); await page.goto('/app'); expect(await noHScroll(page), `${product}: dashboard scroll at ${v.name}`).toBe(true); }
       expect((await b.api.post('/api/v1/auth/logout', { data: {}, headers: { 'x-csrf-token': b.csrf } })).status()).toBeLessThan(400);
       expect((await b.api.get('/api/v1/tenant/p-meta')).status()).toBe(401);

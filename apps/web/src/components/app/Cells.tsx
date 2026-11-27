@@ -18,6 +18,11 @@ export function Cell({ field, value, name }: { field?: FieldMeta; value: unknown
   if (typeof value === 'object') return <span className="mono small">{JSON.stringify(value)}</span>;
   return <>{String(value)}</>;
 }
+/** A money figure for KPI tiles: the amount large, the currency code small beside it (so "1,250.00 EGP" never wraps mid-figure). */
+export function MoneyFigure({ minor }: { minor: number }) {
+  const app = useApp(); const f = fmtMoney(minor, app.currency, app.locale); const cut = f.lastIndexOf(' ');
+  return <span className="mono">{f.slice(0, cut)}<span className="cur">{f.slice(cut + 1)}</span></span>;
+}
 export function LinesView({ rows, meta }: { rows: Record<string, unknown>[]; meta?: Record<string, FieldMeta> }) {
   const app = useApp(); if (!rows.length) return <span className="muted">—</span>;
   const keys = meta && Object.keys(meta).length ? Object.keys(meta) : [...new Set(rows.flatMap((r) => Object.keys(r)))].filter((k) => !/Id$/.test(k));

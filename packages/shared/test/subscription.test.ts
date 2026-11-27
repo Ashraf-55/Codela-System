@@ -83,3 +83,17 @@ describe('access policy (data is never deleted)', () => {
     for (const s of ['suspended', 'expired', 'canceled'] as const) expect(accessLevel(s)).toBe('read_only');
   });
 });
+
+describe('tick: catches up on every transition that is due (no stale full-access window)', () => {
+  const base = { billingPeriod: 'monthly' as const, trialEndsAt: null, graceEndsAt: null, cancelAtPeriodEnd: false, canceledAt: null };
+  it('an active subscription last seen before period end AND grace end is suspended in one step', () => {
+    const sub = { ...base, status: 'active' as const, currentPeriodStart: '2026-01-01T00:00:00.000Z', currentPeriodEnd: '2026-02-01T00:00:00.000Z' };
+    const out = tick(sub, new Date('2026-03-15T00:00:00.000Z'), 7);
+    expect(out.status).toBe('suspended');
+    expect(accessLevel(out.status)).toBe('read_only');
+  });
+  it('still stops at past_due while inside the grace window', () => {
+    const sub = { ...base, status: 'active' as const, currentPeriodStart: '2026-01-01T00:00:00.000Z', currentPeriodEnd: '2026-02-01T00:00:00.000Z' };
+    expect(tick(sub, new Date('2026-02-03T00:00:00.000Z'), 7).status).toBe('past_due');
+  });
+});

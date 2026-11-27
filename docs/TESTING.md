@@ -1,3 +1,28 @@
+# TESTING — seventh pass (2026-11-27)
+
+| Check | Command | Result (fresh run) |
+|---|---|---|
+| Lint | `npm run lint` | clean |
+| Types | `npm run typecheck` | clean (api + web) |
+| Unit / integration / API / DB / auth / tenant isolation / subscriptions | `npm test` | **62 files, 518 tests passed** |
+| Production build | `npm run build` | OK |
+| Browser (Playwright, Chromium desktop + Pixel 7) | see below | **99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27)** |
+| Accessibility (axe-core, WCAG 2.0/2.1 A + AA) | `e2e/tests/a11y.spec.ts` | no serious/critical violations |
+| Dependency audit | `npm run audit:prod` | 0 vulnerabilities |
+
+Browser run (exact):
+```bash
+npm run build
+E2E_RELAX_RATE_LIMITS=1 npm run start:api      # terminal 1 (dev-only flag; ignored in production)
+npm run start:web                              # terminal 2
+cd e2e && npm ci
+E2E_CHROMIUM_PATH=/path/to/chrome E2E_ADMIN_EMAIL=… E2E_ADMIN_PASSWORD=… npx playwright test --trace off
+```
+`E2E_CHROMIUM_PATH` is only needed when the installed browser build does not match the Playwright version. Without `E2E_RELAX_RATE_LIMITS=1` the auth rate limiter (30 / 15 min) correctly blocks the ~150 registrations the suite makes.
+
+New in this pass: `packages/shared/test/subscription.test.ts` (catch-up transitions), `e2e/tests/ui-shell.spec.ts` (confirm dialog + toast, keyboard search, unique navigation, account menu, phone drawer, Super Admin on a phone).
+
+---
 # TESTING
 
 All numbers below come from actual runs during this build (Node 22, Linux sandbox).

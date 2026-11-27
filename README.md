@@ -2,7 +2,7 @@
 
 Ten specialised SaaS products (Medical, Real Estate, E-Commerce, Restaurant, Automotive, Learning, Construction, Booking, Fleet & Delivery, Business) on one multi-tenant platform: each subscriber gets a branded website, a management dashboard, subscriptions, add-ons, global search and reports.
 
-> **Read docs/FINAL_REPORT.md first** — it states exactly what is finished, verified, simulated or missing. Current verification: lint + typecheck clean, 516 vitest tests, production build OK, Playwright 91 passed + 1 flaky / 0 failed, axe-core no violations (`docs/BROWSER_TESTING_REPORT.md`, `docs/ACCESSIBILITY_REPORT.md`, `docs/REMAINING_GAPS.md`). Browser tests: `docs/E2E.md`.
+> **Read docs/FINAL_REPORT.md first** — it states exactly what is finished, verified, simulated or missing. Current verification (2026-11-27): lint + typecheck clean, 518 vitest tests, production build OK, Playwright 99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27), axe-core no serious/critical violations, `npm audit --omit=dev` 0 vulnerabilities. Design system: `docs/DESIGN_SYSTEM.md`. Work log for resuming: `docs/PROGRESS.md`.
 
 ## Requirements
 Node.js ≥ 22 (uses `process.loadEnvFile` and native `better-sqlite3`), npm ≥ 10. bash + curl only for `npm run smoke`.
@@ -33,8 +33,11 @@ npm run dev:web                           # terminal 2 → http://localhost:3000
 | Create a super admin | `npm run create-admin` (env `ADMIN_EMAIL`, `ADMIN_PASSWORD`) |
 
 ## Documentation
-FINAL_REPORT · ARCHITECTURE · IMPLEMENTATION_PLAN · DATABASE_SCHEMA · API_DOCUMENTATION · SECURITY · TESTING · SUBSCRIPTION_SYSTEM · TENANT_ARCHITECTURE · DEPLOYMENT · CHANGELOG (all in `docs/`), `.env.example`, work log `docs/TASKS.md`.
+FINAL_REPORT · PROGRESS · DESIGN_SYSTEM · ARCHITECTURE · IMPLEMENTATION_PLAN · DATABASE_SCHEMA · API_DOCUMENTATION · SECURITY · TESTING · SUBSCRIPTION_SYSTEM · TENANT_ARCHITECTURE · DEPLOYMENT · CHANGELOG (all in `docs/`), `.env.example`, work log `docs/TASKS.md`.
 
 
-## Recent additions (2026-11-24)
-Public sites with built-in "who we are / what we do" content, an extended website builder (SEO, hours, team, gallery, theme), custom roles and CSV export, monthly add-on renewals, Super Admin settings / add-ons / announcements / notification templates / customer detail, medical lab-pharmacy-radiology screens, booking refunds. Status and gaps: `docs/REMAINING_GAPS.md`. Browser (Playwright) tests have **not** been run yet: `docs/E2E.md`.
+## Seventh pass (2026-11-27)
+Premium redesign on design system v3 (self-hosted fonts, icon set, toasts, accessible dialogs, new dashboard/admin/marketing shells, refined identities for all ten products), subscription catch-up fix, Super Admin phone navigation, duplicate-navigation fix, the full browser suite brought from 10 failures to green. Browser tests: `cd e2e && npx playwright test` with the API started as `E2E_RELAX_RATE_LIMITS=1 npm run start:api` (see `docs/TESTING.md`).
+
+## Earlier additions (2026-11-24)
+Public sites with built-in "who we are / what we do" content, an extended website builder (SEO, hours, team, gallery, theme), custom roles and CSV export, monthly add-on renewals, Super Admin settings / add-ons / announcements / notification templates / customer detail, medical lab-pharmacy-radiology screens, booking refunds. Status and gaps: `docs/REMAINING_GAPS.md`. Browser tests: `docs/E2E.md`.

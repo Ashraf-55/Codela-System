@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ApiError, api } from '@/lib/api';
 import { ErrorBox, Loading, useApp, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Rec { id: string; code: string | null; data: Record<string, any> }
 interface Line { kind: string; desc: string; unit?: string; qty: number; unitCost: number }
@@ -19,7 +19,7 @@ export default function Estimates() {
   if (est.error) return <ErrorBox error={est.error} retry={est.reload} />; if (!est.data) return <Loading />;
   const m = app.money; const chosen = sel?.type === 'est' ? est.data.find((x) => x.id === sel.id) : undefined; const chosenClaim = sel?.type === 'claim' ? (claims.data ?? []).find((x) => x.id === sel.id) : undefined;
   async function finalise(e: Rec) {
-    if (!window.confirm(t('اعتماد المقايسة نهائيًا وإنشاء عرض السعر؟ لا يمكن تعديلها بعد ذلك.', 'Finalise this estimate and create the quotation? It cannot be edited afterwards.'))) return; setBusy(e.id); setMsg(null);
+    if (!(await confirmDialog(t('اعتماد المقايسة نهائيًا وإنشاء عرض السعر؟ لا يمكن تعديلها بعد ذلك.', 'Finalise this estimate and create the quotation? It cannot be edited afterwards.')))) return; setBusy(e.id); setMsg(null);
     try { await api(`/tenant/p/boqEstimate/${e.id}`, { method: 'PATCH', body: { status: 'final' } }); setMsg({ ok: true, text: t('تم الاعتماد وإنشاء عرض السعر.', 'Finalised; the quotation was created.') }); est.reload(); } catch (x) { setMsg({ ok: false, text: (x as ApiError).message }); } finally { setBusy(''); }
   }
   return (
