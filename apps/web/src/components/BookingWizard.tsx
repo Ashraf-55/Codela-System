@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { confirmDialog } from '@/components/Providers';
 import { ApiError, api } from '@/lib/api';
 import { fmtMoney, type Locale } from '@/lib/i18n';
 
@@ -52,7 +53,7 @@ export function BookingWizard({ locale, currency, site }: { locale: Locale; curr
           <div className="row" style={{ flexWrap: 'wrap' }}>{anyTimes.map((tm) => <button type="button" key={tm} className={`btn sm${slot?.time === tm ? ' primary' : ''}`} aria-pressed={slot?.time === tm} onClick={() => setSlot({ staffId: '', time: tm })}>{tm}</button>)}</div>}</fieldset>}
       {svc && slot && <form className="stack" onSubmit={submit}><b>4. {t('بياناتك', 'Your details')}</b>
         <div className="grid g2"><label className="field">{t('الاسم', 'Name')} *<input name="name" required minLength={2} autoComplete="name" /></label><label className="field">{t('الهاتف', 'Phone')} *<input name="phone" required type="tel" className="ltr" autoComplete="tel" /></label><label className="field">{t('البريد (اختياري)', 'Email (optional)')}<input name="email" type="email" className="ltr" /></label></div>
-        <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', insetInlineStart: -9999, width: 1, height: 1 }} />
+        <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp" />
         <p className="small muted">{svc.name} · {date} · {slot.time} · {fmtMoney(svc.price, currency, locale)}</p>
         <div><button className="btn primary" disabled={busy}>{busy ? '…' : t('تأكيد الحجز', 'Confirm booking')}</button></div></form>}
       {err && <div className="alert error" role="alert">{err}</div>}
@@ -92,7 +93,7 @@ export function ManageBooking({ locale, currency, site }: { locale: Locale; curr
         {active && <><label className="field">{t('موعد جديد', 'New date')}<input type="date" className="ltr" min={today()} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} /></label>
           {groups.map((g) => <div key={g.staffId} className="stack"><b className="small">{g.staffName}</b><div className="row" style={{ flexWrap: 'wrap' }}>{g.slots.map((tm) => <button type="button" key={tm} className="btn sm" onClick={() => act('reschedule', { date, startTime: tm, staffId: g.staffId })}>{tm}</button>)}</div></div>)}
           {!groups.length && <p className="muted small">{t('لا مواعيد متاحة في هذا اليوم.', 'No free times on this day.')}</p>}
-          <div><button className="btn danger" onClick={() => confirm(t('هل تريد إلغاء الحجز؟ قد تُطبَّق رسوم حسب سياسة الإلغاء.', 'Cancel this booking? A fee may apply under the cancellation policy.')) && act('cancel')}>{t('إلغاء الحجز', 'Cancel booking')}</button></div></>}</div>}
+          <div><button className="btn danger" onClick={async () => (await confirmDialog(t('هل تريد إلغاء الحجز؟ قد تُطبَّق رسوم حسب سياسة الإلغاء.', 'Cancel this booking? A fee may apply under the cancellation policy.'), { danger: true })) && act('cancel')}>{t('إلغاء الحجز', 'Cancel booking')}</button></div></>}</div>}
     </section>
   );
 }

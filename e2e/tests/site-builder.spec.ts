@@ -23,7 +23,7 @@ test.describe('Website builder', () => {
     const after = await types(); expect(after[0]).toBe(moved); expect(after.length).toBe(before.length);
     await page.getByRole('button', { name: /^(save|حفظ)$/i }).click(); await expect(page.getByRole('alert').first()).toBeVisible();
     const draft = (await (await o.api.get('/api/v1/tenant/site')).json()).data.draft.sections.map((s: { type: string }) => s.type); expect(draft).toEqual(after); // persisted, not just visual
-    await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toBeVisible();
+    await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toHaveText(/^(Published|تم النشر)$/); // wait for the publish itself, not any earlier alert
     await page.reload(); await expect(cards.first()).toBeVisible(); expect(await types()).toEqual(after);                                            // survives a reload
     await page.goto(`/sites/${o.slug}`);
     const ids = await page.locator('main [id^="sec-"]').evaluateAll((els) => els.map((e) => e.id.replace('sec-', '')));
@@ -49,14 +49,14 @@ test.describe('Website builder', () => {
     expect((await o.api.put('/api/v1/tenant/site', { data: { ...base, pages: [mk('same'), mk('same')] }, headers: o.h })).status()).toBe(400);
     expect((await o.api.put('/api/v1/tenant/site', { data: { ...base, pages: [mk('portal')] }, headers: o.h })).status()).toBe(400);
     expect((await o.api.put('/api/v1/tenant/site', { data: { ...base, pages: [mk('Has Space')] }, headers: o.h })).status()).toBe(400);
-    await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toBeVisible();
+    await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toHaveText(/^(Published|تم النشر)$/); // wait for the publish itself, not any earlier alert
     // published page routes, SEO title/description, menu link, 404 for unknown / disabled
     const r = await page.goto(`/sites/${o.slug}/our-story`); expect(r!.status()).toBe(200);
     await expect(page).toHaveTitle('Our Story | Builder'); await expect(page.getByRole('heading', { level: 1 })).toHaveText('Our Story'); await expect(page.getByText('We started in a small garage.')).toBeVisible();
     expect(await page.locator('meta[name="description"]').getAttribute('content')).toBe('How we started');
     await page.goto(`/sites/${o.slug}`); await expect(page.getByRole('navigation', { name: 'Site' }).getByRole('link', { name: 'Our Story' })).toHaveAttribute('href', `/sites/${o.slug}/our-story`);
     expect((await page.goto(`/sites/${o.slug}/no-such-page`))!.status()).toBe(404);
-    await page.goto('/app/site'); await mgr.getByTestId('page-card').first().getByLabel(/enabled|منشورة/i).uncheck(); await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toBeVisible();
+    await page.goto('/app/site'); await mgr.getByTestId('page-card').first().getByLabel(/enabled|منشورة/i).uncheck(); await page.getByRole('button', { name: /^(publish|نشر)$/i }).click(); await expect(page.getByRole('alert').first()).toHaveText(/^(Published|تم النشر)$/); // wait for the publish itself, not any earlier alert
     expect((await page.goto(`/sites/${o.slug}/our-story`))!.status()).toBe(404);
   });
 

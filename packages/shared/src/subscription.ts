@@ -32,7 +32,8 @@ export function tick(sub: Sub, now: Date, graceDays: number): Sub {
   if (sub.status === 'trialing' && sub.trialEndsAt && t >= sub.trialEndsAt) return { ...sub, status: 'expired' };
   if (sub.status === 'active' && sub.currentPeriodEnd && t >= sub.currentPeriodEnd) {
     if (sub.cancelAtPeriodEnd) return { ...sub, status: 'canceled', canceledAt: sub.currentPeriodEnd };
-    return { ...sub, status: 'past_due', graceEndsAt: iso(new Date(new Date(sub.currentPeriodEnd).getTime() + graceDays * DAY)) };
+    // re-tick: if the grace window has also passed, go straight to suspended (one call must never hand out a stale full-access state)
+    return tick({ ...sub, status: 'past_due', graceEndsAt: iso(new Date(new Date(sub.currentPeriodEnd).getTime() + graceDays * DAY)) }, now, graceDays);
   }
   if (sub.status === 'past_due' && sub.graceEndsAt && t >= sub.graceEndsAt) return { ...sub, status: 'suspended' };
   return sub;

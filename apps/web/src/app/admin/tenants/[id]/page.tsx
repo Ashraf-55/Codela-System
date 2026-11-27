@@ -7,7 +7,7 @@ import { ApiError, api } from '@/lib/api';
 import { enumLabel } from '@/lib/i18n';
 import { PRODUCT_NAMES } from '@/lib/content';
 import { ErrorBox, Loading, useAsync } from '@/components/app/AppShell';
-import { useI18n } from '@/components/Providers';
+import { useI18n, confirmDialog } from '@/components/Providers';
 
 interface Detail { tenant: { id: string; name: string; slug: string; productSlug: string; status: string; createdAt: string }; subscription: { status: string; billingPeriod: string; trialEndsAt: string | null; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean; plan: { tier: string } }; limits: Record<string, number | boolean>; usage: Record<string, number> }
 interface Ev { id: string; type: string; fromStatus: string | null; toStatus: string | null; meta: { reason?: string } | null; createdAt: string }
@@ -29,7 +29,7 @@ export default function TenantDetail() {
   const { tenant, subscription: s } = det.data.data;
   async function run(action: 'activate' | 'renew' | 'cancel', atPeriodEnd = false) {
     if (reason.trim().length < 3) { setMsg({ ok: false, text: t('اكتب سببًا (3 أحرف على الأقل).', 'Enter a reason (at least 3 characters).') }); return; }
-    if (action === 'cancel' && !window.confirm(t('تأكيد إلغاء الاشتراك؟', 'Cancel this subscription?'))) return;
+    if (action === 'cancel' && !(await confirmDialog(t('تأكيد إلغاء الاشتراك؟', 'Cancel this subscription?'), { danger: true }))) return;
     setBusy(true); setMsg(null);
     try { await api(q(`/subscription/${action}`), { method: 'POST', ...o, body: { reason, billingPeriod: period, atPeriodEnd } }); setMsg({ ok: true, text: t('تم التنفيذ وتسجيله في السجل.', 'Done and recorded in the audit log.') }); setReason(''); det.reload(); hist.reload(); act.reload(); }
     catch (e) { setMsg({ ok: false, text: (e as ApiError).message }); } finally { setBusy(false); }

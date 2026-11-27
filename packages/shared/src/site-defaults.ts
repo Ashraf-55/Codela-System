@@ -111,7 +111,7 @@ export interface DefaultSection { type: string; enabled: boolean; content: { tit
 
 /** The sections a new website starts with. */
 export function defaultSections(productSlug: string, locale: SiteLocale, name: string): DefaultSection[] {
-  const c = SITE_COPY[productSlug]; const l = locale === 'en' ? 'en' : 'ar'; const sub = (x: L) => x[l].replace(/\{name\}/g, name);
+  const c = SITE_COPY[productSlug]; const l = locale === 'en' ? 'en' : 'ar'; const sub = (x: L) => x[l].replace(/\{name\}/g, l === 'ar' ? `\u2068${name}\u2069` : name); // Arabic copy: isolate the (often Latin) name so it cannot reorder the punctuation around it
   if (!c) return ['hero', 'about', 'services', 'contact'].map((type) => ({ type, enabled: true, content: {} }));
   return [
     { type: 'hero', enabled: true, content: { title: sub(c.heroTitle), text: sub(c.hero) } },
