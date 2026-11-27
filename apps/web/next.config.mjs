@@ -7,6 +7,8 @@ export default {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   // /api/* passes through proxy.ts, which would otherwise cut request bodies at 10 MB; hosted lesson videos go up to 150 MB
   experimental: { proxyClientMaxBodySize: '160mb' },
+  // production build type-checks the app only (tests need vitest, a dev dependency that hosts may not install)
+  typescript: { tsconfigPath: 'tsconfig.build.json' },
   images: { unoptimized: true }, // the image optimizer is not used (tenant logos are plain <img>); keeps that attack surface closed
   async headers() {
     return [{ source: '/:path*', headers: [
