@@ -9,6 +9,8 @@ import { bootstrapAdmin } from './bootstrap-admin';
 
 loadEnv();
 installCrashHandlers();
+// Started by scripts/start-all.mjs with an IPC channel: exit when that parent dies, so no orphan API keeps its port.
+if (process.send) process.on('disconnect', () => process.exit(0));
 const port = Number(process.env.PORT ?? 4000);
 const file = databaseFile();
 const db = createDb(file);   // applies pending migrations
