@@ -1,6 +1,8 @@
 # Deploying on Hostinger (Business / Cloud "Web Apps")
 
-One web app runs everything: `scripts/start-all.mjs` starts the API privately on 127.0.0.1:4000 and the website on the port Hostinger gives (`PORT`). It runs Next.js and tsx with Node directly (Hostinger starts apps without `npm` on PATH).
+One web app runs everything. `scripts/start-all.mjs` listens immediately (Hostinger requires the entry process itself to call `listen()` within 3 s), serves the website in-process (Next.js custom server) and runs the API as a private child on a free 127.0.0.1 port; the API exits if its parent dies. Node runs Next.js and tsx directly (Hostinger starts apps without `npm` on PATH).
+
+**Data survives redeploys automatically:** Hostinger puts each deploy in `…/hbuilds/versions/<id>/`; unless `DATABASE_FILE` / `UPLOAD_DIR` are absolute paths, `start-all` keeps them in `…/domains/<domain>/codela-data/`.
 
 ## Ship a prebuilt website (shared plans)
 Shared hosting caps processes and threads, so `next build` fails there (`spawn node EAGAIN`). Build on a Linux/Windows/macOS machine and commit the result to the deploy branch:
@@ -31,7 +33,6 @@ Rebuild and re-push `apps/web/.next` after every change to `apps/web` or `packag
 | `CSRF_SECRET` | 64 random characters (never share) |
 | `TRUST_PROXY` | `loopback` |
 | `PAYMENT_PROVIDER` | `sandbox` while testing |
-| `DATABASE_FILE` | `../codela-data/codela.db` — outside the app folder so redeploys keep the data |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | first Super Admin, created on first start only when no admin exists; remove after logging in |
 
 Do **not** set `NODE_ENV` or `PORT` in the panel (`NODE_ENV=production` makes the install skip build tools; `start-all` sets it itself; Hostinger provides `PORT`).
