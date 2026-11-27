@@ -64,6 +64,9 @@ async function main() {
   const apiPort = await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('the API did not start within 90 s')), 90_000);
     api.on('message', (m) => { if (m?.type === 'api-ready') { clearTimeout(t); res(m.port); } }); });
   process.env.API_URL = val(process.env.API_URL, `http://127.0.0.1:${apiPort}`); // set before Next.js loads the modules that read it
+  // self-check: can this process reach the API? (logs the exact error if the host blocks loopback connections)
+  try { const r = await fetch(`${process.env.API_URL}/api/v1/health`, { signal: AbortSignal.timeout(5000) }); log(`API self-check: HTTP ${r.status}`); }
+  catch (e) { log(`API self-check FAILED: ${e?.cause?.code ?? ''} ${e?.cause?.message ?? e?.message ?? e}`); }
   process.chdir(webDir);
   const app = webRequire('next')({ dev: false, dir: webDir });
   await app.prepare();
