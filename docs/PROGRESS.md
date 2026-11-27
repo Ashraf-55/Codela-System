@@ -18,13 +18,11 @@ Persistent work log so a new session can resume exactly where this one stopped. 
 | 4 Critical backend fixes | done — subscription `tick` catch-up bug (stale full-access request) fixed + regression tests |
 | 5 Business functionality | admin mobile navigation (was unreachable on phones) fixed; manual-payment test hooks added |
 | 6 Premium redesign | design system v3 (tokens, fonts, icons, shell, marketing, records, toasts, dialogs) done |
-| 7 Public sites / ten products | identity layer rebuilt for all ten (dashboard + site); screenshots checked for medical, restaurant, automotive |
+| 7 Public sites / ten products | identity layer rebuilt for all ten (dashboard + site); desktop + mobile screenshots reviewed for all ten |
 | 8 Perf / a11y / responsive | sortable headers keyboard-accessible, aria-invalid + described errors, confirm dialog, KPI 2-up on phones |
-| 9 Testing | in progress — full Playwright run after redesign |
-| 10 Build + deliverables | pending — docs, ZIP, push |
+| 9 Testing | done — vitest 518 passed; **Playwright 99 passed / 0 failed / 0 flaky / 0 skipped**; axe clean; audit 0 vulns |
+| 10 Build + deliverables | done — production build OK, docs updated, ZIP built, branch `claude/seventh-pass-redesign` pushed |
 
-## Next actions
-- Read the latest Playwright run, fix every failure, re-run until green.
-- Run axe (a11y spec) and review per-product screenshots (all ten sites + dashboards, desktop + mobile).
-- Update FINAL_REPORT / REMAINING_GAPS / TESTING / SECURITY / CHANGELOG / BROWSER_TESTING_REPORT, README.
-- Build ZIP without node_modules/.next/data, commit on a branch, push.
+## Next actions (for a future pass)
+- Items in `docs/REMAINING_GAPS.md` → "Still open" (external credentials first, then Firefox/WebKit + screen-reader pass).
+- Self-host the ten product display faces if Google Fonts is not acceptable in production.

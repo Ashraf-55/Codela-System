@@ -72,7 +72,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { href: '/app', text: t('dashboard'), icon: 'home', exact: true },
     { show: !!BOARDS[P] && has(BOARDS[P]?.entity), href: '/app/board', text: BOARDS[P]?.title[locale] ?? '', icon: 'kanban' },
     { show: P === 'realestate' && ctx.can('leads.read'), href: '/app/lead-performance', text: L('أداء العملاء المحتملين', 'Lead performance'), icon: 'chart' },
-    { show: P === 'business' && ctx.can('quotations.read'), href: '/app/quotations', text: L('عروض الأسعار', 'Quotations'), icon: 'file' },
+    { show: P === 'business' && ctx.can('quotations.read'), href: '/app/quotations', text: L('محرر عروض الأسعار', 'Quotation editor'), icon: 'file' },
     { show: P === 'business' && ctx.can('stock.read'), href: '/app/stock', text: L('المخزون حسب المخزن', 'Stock by warehouse'), icon: 'box' },
     { show: P === 'fleet' && ctx.can('collections.read'), href: '/app/cash', text: L('تحصيلات المناديب', 'Driver cash'), icon: 'cash' },
     { show: P === 'automotive' && ctx.can('workOrders.read'), href: '/app/workorders', text: L('أوامر الشغل', 'Work orders'), icon: 'wrench' },
@@ -99,6 +99,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     { show: P === 'realestate', href: '/app/board?b=viewings', text: L('المعاينات', 'Viewings'), icon: 'pin' },
     { show: P === 'restaurant' && !!entities.find((e) => e.key === 'order')?.canCreate, href: '/app/pos', text: L('نقطة البيع', 'POS'), icon: 'receipt' },
   ];
+  // BOARDS registry entries and hand-written links can point at the same screen: keep the first of each href (duplicate React keys also multiplied them on re-render)
+  const seen = new Set<string>();
+  const workUnique = work.filter((n) => n.show !== false && !seen.has(n.href) && (seen.add(n.href), true));
   const admin: NavItem[] = [
     { href: '/app/billing', text: t('billing'), icon: 'card' },
     { show: ctx.can('roles.manage'), href: '/app/roles', text: L('الأدوار والصلاحيات', 'Roles & permissions'), icon: 'shield' },
@@ -121,9 +124,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="shell" data-product={me.tenant.productSlug}>
         <aside id="app-nav" className={`sidebar${open ? ' open' : ''}`} aria-label={L('التنقل', 'Navigation')}>
           <div className="brand"><span className="dot"><Icon name={PRODUCT_ICON[P] ?? 'grid'} size={18} /></span><span className="t"><span>{me.tenant.name}</span><small>{productName(P, locale)}</small></span></div>
-          <nav aria-label={L('مساحة العمل', 'Workspace')} style={{ display: 'contents' }}>{work.map(nav)}</nav>
+          <nav aria-label={L('مساحة العمل', 'Workspace')} style={{ display: 'contents' }}>{workUnique.map(nav)}</nav>
           <details open={!navCollapsed} onToggle={(e) => setNavCollapsed(!(e.currentTarget as HTMLDetailsElement).open)}>
-            <summary>{L('السجلات', 'Records')}<span className="badge" style={{ background: 'var(--sb-hover)', color: 'inherit' }}>{entities.length}</span><Icon name="chevronDown" size={14} /></summary>
+            <summary>{L('السجلات', 'Records')}<span className="badge" style={{ background: 'var(--sb-hover)', color: 'var(--sb-fg)' }}>{entities.length}</span><Icon name="chevronDown" size={14} /></summary>
             {entities.length > 10 && <input type="search" className="nav-filter" value={navQ} onChange={(e) => setNavQ(e.target.value)} placeholder={L('تصفية القائمة…', 'Filter…')} aria-label={L('تصفية السجلات', 'Filter records')} />}
             <nav aria-label={L('السجلات', 'Records')}>{recs.map((e) => nav({ href: `/app/e/${e.key}`, text: label(e), icon: entityIcon(e.key) }))}</nav>
           </details>
@@ -166,7 +169,7 @@ function AccountMenu({ me, onLogout }: { me: Me; onLogout: () => void }) {
   const L = (ar: string, en: string) => (locale === 'ar' ? ar : en);
   return (
     <div className="menu" ref={ref}>
-      <button type="button" className="user-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} aria-label={L('حسابي', 'Account')}><span className="avatar" aria-hidden="true">{initials(me.user.name)}</span><span className="name">{me.user.name}</span><Icon name="chevronDown" size={14} /></button>
+      <button type="button" className="user-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)} ><span className="avatar" aria-hidden="true" data-i={initials(me.user.name)} /><span className="name">{me.user.name}</span><span className="sr-only">{L(' الحساب', ' Account')}</span><Icon name="chevronDown" size={14} /></button>
       {open && <div className="menu-pop" role="menu">
         <div className="menu-head"><b>{me.user.name}</b><span>{me.user.email}</span><span className="badge info" style={{ justifySelf: 'start', marginTop: 6 }}>{me.role}</span></div>
         <Link role="menuitem" href="/app/settings" onClick={() => setOpen(false)}><Icon name="settings" size={16} />{L('إعدادات الحساب', 'Account settings')}</Link>

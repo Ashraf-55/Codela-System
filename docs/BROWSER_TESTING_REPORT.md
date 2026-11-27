@@ -1,3 +1,20 @@
+# Browser testing report — seventh pass (2026-11-27)
+
+**Final run:** 99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27) — real Chromium (desktop profile + Pixel 7 profile) against `next start` + the API on a scratch SQLite database, one worker. Evidence: `docs/qa/evidence/playwright-results.json` (stats: expected 99, unexpected 0, flaky 0, skipped 0), `playwright-report/index.html`. No `a11y-results.jsonl` was written because axe found no violations. Per-step screenshots (~220 MB) are generated locally and git-ignored.
+
+**Baseline at the start of this pass (unchanged code): 82 passed, 10 failed, 1 flaky.** Each failure was traced to its root cause:
+| Failing test(s) | Root cause | Fix |
+|---|---|---|
+| `all-products › dashboard` ×8, `medical-journey` | `locator('main, body')` matches two elements once the dashboard renders → strict-mode error (earlier "passes" were a race against rendering) | assert `main#main` — a stronger check that the shell rendered |
+| `manual-payment` | spec used `data-testid` hooks (`mp-reference`, `review-approve`, …) the components never had | hooks added to `ManualPayment` and the admin review form; the flow itself was correct |
+| `site-builder › per-page SEO slugs` | after a rejected Save the error alert was still visible, so "wait for alert" passed instantly and the test navigated before Publish finished | wait for the "Published" message |
+| `lesson-media` (after redesign) | the header search is now a proper `combobox`, so an unscoped `getByRole('combobox').first()` picked it | scope the locator to `main` |
+| `a11y` ×11 (after redesign, first run) | label-in-name on the logo link and account button; low contrast on the records counter | fixed in the components |
+
+Journeys covered (all passing): Super Admin login and screens, registration, owner login/logout and session invalidation, tenant creation for all ten products, manual payment → approval → subscription active, add-on and plan restrictions (API + billing UI), dashboard navigation, generic and product CRUD, global search (keyboard), website builder → publish → public site (pages, SEO, images, cropping), public browsing of all ten sites at desktop/tablet/mobile, role and permission restrictions (lab technician, custom roles), cross-tenant access → 404, delete confirmation dialog, phone drawers for tenant and Super Admin, no horizontal overflow, axe on every product.
+Not covered: Firefox, WebKit, real devices, screen readers.
+
+---
 # Browser testing report
 
 **Last full run: 2026-11-26, Playwright 92 tests (chromium desktop profile + Pixel 7 mobile profile), real Chromium against a real `next start` + API on a scratch SQLite database.**

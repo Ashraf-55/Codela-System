@@ -313,3 +313,6 @@ input[name="website"][tabindex="-1"], .hp { position: absolute !important; width
 @media (max-width: 560px) { .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .kpi-grid .card.kpi { padding: 14px; } .kpi-grid .kpi b { font-size: 1.3rem; } }
 .site-footer .logo .mark { background: var(--signal); color: var(--ink); }
 .footer-grid { align-items: start; }
+ul.ticks li.off { color: var(--color-muted-foreground); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); }
+ul.ticks li.off::before { background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238793a1' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M7 7l10 10M17 7 7 17'/%3E%3C/svg%3E") center / 9px no-repeat; }
+.avatar[data-i]::before { content: attr(data-i); }

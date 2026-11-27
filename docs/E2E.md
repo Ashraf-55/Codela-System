@@ -1,6 +1,6 @@
 # End-to-end tests (Playwright) — exact local commands
 
-Status: **written, never executed** (the authoring environment had no browser, no network and no `node_modules`). Treat the first run as a calibration pass; selectors and the generic isolation probe may need small adjustments.
+Status (2026-11-27): **executed — 99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27)** (see BROWSER_TESTING_REPORT.md). Use `E2E_RELAX_RATE_LIMITS=1` on the API and `E2E_CHROMIUM_PATH` if the browser build does not match Playwright.
 
 ```bash
 # 1. repo root

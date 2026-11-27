@@ -11,11 +11,12 @@ export function PlanCards({ plans, locale, slug }: { plans: Plan[]; locale: Loca
       {plans.map((p) => (
         <section key={p.id} className={`card tier${p.tier === 'professional' ? ' featured' : ''}`} aria-labelledby={`pl-${p.id}`}>
           <h3 id={`pl-${p.id}`}>{locale === 'ar' ? p.nameAr : p.nameEn}</h3>
+          {p.tier === 'professional' && <span className="badge info" style={{ justifySelf: 'start' }}>{locale === 'ar' ? 'الأكثر اختيارًا' : 'Most chosen'}</span>}
           <div className="price">{fmtMoney(p.priceMonthly, p.currency, locale)} <span className="muted small">{t('perMonth', locale)}</span></div>
           <div className="muted small">{fmtMoney(p.priceAnnual, p.currency, locale)} {t('perYear', locale)}</div>
           <p><span className="badge info">{t('freeTrial', locale)}: {p.trialDays} {t('days', locale)}</span></p>
           <ul className="ticks">{Object.entries(p.limits).map(([k, v]) => (
-            <li key={k}>{LIMIT_LABELS[k]?.[locale] ?? k}{typeof v === 'number' ? `: ${new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US').format(v)}` : v ? '' : ` — ${t('no', locale)}`}</li>))}</ul>
+            <li key={k} className={v === false ? 'off' : undefined}>{LIMIT_LABELS[k]?.[locale] ?? k}{typeof v === 'number' ? `: ${new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : 'en-US').format(v)}` : v ? '' : <span className="sr-only"> — {t('no', locale)}</span>}</li>))}</ul>
           <Link className="btn primary block" href={`/register?product=${slug}&plan=${p.tier}`}>{t('register', locale)}</Link>
         </section>
       ))}

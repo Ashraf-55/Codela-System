@@ -1,4 +1,14 @@
 # CHANGELOG
+## 0.3.0 — seventh pass (2026-11-27)
+* **Fix:** subscription state machine catches up past period end *and* grace end in one step (no stale full-access request).
+* **Fix:** Super Admin mobile navigation; duplicate sidebar links; pricing showed ticks for unavailable features; keyboard-inaccessible sortable headers; RTL page widening from off-screen helpers; Arabic default copy isolates the business name.
+* **Design system v3:** tokens (light/dark/OS), self-hosted UI fonts, inline icon set, full component kit, toasts, accessible confirm dialog (replaces all `window.confirm`), KPI money figures, empty states, page headers.
+* **Redesign:** tenant dashboard shell (icon navigation, filterable records, account menu, ⌘K search with listbox semantics, mobile drawer), Super Admin shell, record list/detail/new, dashboard home, marketing home/header/footer, auth pages, all ten product identities.
+* **Tests:** +2 vitest (518), +6 Playwright (`ui-shell.spec.ts`); four broken specs repaired (ambiguous locators, racy publish assertion, missing test ids). Full browser suite green: 99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27).
+* **Docs:** DESIGN_SYSTEM.md, PROGRESS.md; FINAL_REPORT, REMAINING_GAPS, IMPLEMENTATION_PLAN, TESTING, SECURITY, BROWSER_TESTING_REPORT, ACCESSIBILITY_REPORT, E2E, README updated.
+
+---
+# CHANGELOG
 ## 0.1.0 — first complete engineering build
 * Platform: multi-tenant auth/RBAC/CSRF, subscriptions + entitlements + add-ons, billing records with gateway boundary + signed webhooks, white-label sites + DNS-verified domains, global search, notifications + outbox, Super Admin (tenants, plans, analytics, leads, tasks, settings, staff).
 * Ten tested product backends: Medical, Real Estate, E-Commerce, Restaurant, Automotive, Learning, Construction, Booking, Fleet & Delivery, Business.

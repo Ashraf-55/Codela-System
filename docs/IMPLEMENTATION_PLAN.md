@@ -1,3 +1,21 @@
+# IMPLEMENTATION_PLAN — seventh pass (2026-11-27)
+
+Prioritised from the audit (baseline: green unit tests, but 10 failing browser tests and a generic-looking UI). Every item is resolved or listed as external in REMAINING_GAPS.md.
+
+| Priority | Finding | Resolution | Status |
+|---|---|---|---|
+| Critical | `tick()` grants one full-access request to long-lapsed subscriptions | catch-up transitions + regression tests (TDD) | done |
+| Critical | browser suite not reproducible (82/10/1) despite docs claiming 91/0 | root-cause each failure; fix app or test (never weaken) | done — 99 passed, 0 failed, 0 flaky, 0 skipped (2026-11-27) |
+| High | Super Admin navigation unreachable on phones | menu button + drawer + backdrop | done, browser-tested |
+| High | duplicate sidebar links | de-duplicate by href | done, browser-tested |
+| High | visual quality below commercial standard (166 lines of CSS, no icons, monospace numbers, emoji controls, wrapping KPIs) | design system v3 (DESIGN_SYSTEM.md) | done |
+| Medium | `window.confirm` / no feedback after save/delete | accessible `<dialog>` + toasts | done |
+| Medium | click-only sorting, form errors not linked to inputs | buttons + `aria-sort`; `aria-invalid` + `aria-describedby` | done |
+| Medium | pricing ticks on unavailable features; ambiguous nav labels | fixed | done |
+| Low | RTL hero punctuation with Latin names; off-screen helpers widening RTL pages | bidi isolates; clipped helpers | done (new sites) |
+| External | gateway, messaging, DNS/TLS, monitoring, backups | documented | blocked by credentials |
+
+---
 # IMPLEMENTATION_PLAN — final status per phase
 
 | Phase | Planned scope | Status |

@@ -5,7 +5,7 @@ import { Icon, PRODUCT_ICON } from './Icon';
 import { PRODUCT_NAMES } from '@/lib/content';
 import { t, type Locale } from '@/lib/i18n';
 
-export const Logo = () => <Link href="/" className="logo" aria-label="Codela home"><span className="mark" aria-hidden="true">c</span><span>codela<i>.</i></span></Link>;
+export const Logo = () => <Link href="/" className="logo"><span className="mark" aria-hidden="true">c</span><span>codela<i>.</i></span></Link>;
 
 export function SiteHeader({ locale }: { locale: Locale }) {
   return (
